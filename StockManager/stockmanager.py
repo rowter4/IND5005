@@ -37,21 +37,33 @@ class Login(QtWidgets.QDialog):
         self.textName = QtWidgets.QLineEdit(self)
         self.textPass = QtWidgets.QLineEdit(self)
         self.buttonLogin = QtWidgets.QPushButton('Admin Login', self)
-        self.buttonLogin.clicked.connect(self.handleLogin)
+        # self.buttonLogin.clicked.connect(self.handleLogin)
+        self.buttonLogin.clicked.connect(self.login_check)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.textName)
         layout.addWidget(self.textPass)
         layout.addWidget(self.buttonLogin)
 
-
-    def handleLogin(self):
-        if (self.textName.text() == 'Admin' and
-            self.textPass.text() == '1234'):
+    def login_check(self):
+        uname = self.textName.text()
+        passw = self.textPass.text()
+        connection = sqlite3.connect("user.db")
+        result = connection.execute("SELECT * FROM user WHERE USERNAME = ? AND PASSWORD = ?", (uname, passw))
+        if result.fetchall():
             self.accept()
         else:
+            print("invalid login")
             QtWidgets.QMessageBox.warning(
                 self, 'Error', 'Bad user or password')
+
+    # def handleLogin(self):
+    #     if (self.textName.text() == 'Admin' and
+    #         self.textPass.text() == '1234'):
+    #         self.accept()
+    #     else:
+    #         QtWidgets.QMessageBox.warning(
+    #             self, 'Error', 'Bad user or password')
 
 class Example(QMainWindow):
 
