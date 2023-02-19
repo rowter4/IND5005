@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets
 import os
 import datetime
+
 import manipulation as mp
 from PyQt5.QtCore import QRect
-from PyQt5.QtWidgets import QTabWidget
+from PyQt5.QtWidgets import QTabWidget, QFileDialog
 from PyQt5.QtWidgets import QTableWidget
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QVBoxLayout
@@ -13,10 +14,12 @@ from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QListWidget
 from PyQt5.QtWidgets import QStackedWidget
-from PyQt5.QtWidgets import (QWidget, QPushButton,QMainWindow,
+from PyQt5.QtWidgets import (QWidget, QPushButton, QMainWindow,
                              QHBoxLayout, QAction)
 
 import sqlite3
+import re
+import pandas as pd
 
 try:
     conn = sqlite3.connect('stock.db')
@@ -33,25 +36,39 @@ except Exception:
 
 class Login(QtWidgets.QDialog):
     def __init__(self, parent=None):
+        print('Start App')
         super(Login, self).__init__(parent)
+        print('Get Username and Password')
         self.textName = QtWidgets.QLineEdit(self)
         self.textPass = QtWidgets.QLineEdit(self)
         self.buttonLogin = QtWidgets.QPushButton('Admin Login', self)
-        self.buttonLogin.clicked.connect(self.handleLogin)
+        # self.buttonLogin.clicked.connect(self.handleLogin)
+        self.buttonLogin.clicked.connect(self.login_check)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.textName)
         layout.addWidget(self.textPass)
         layout.addWidget(self.buttonLogin)
 
-
-    def handleLogin(self):
-        if (self.textName.text() == 'Admin' and
-            self.textPass.text() == '1234'):
+    def login_check(self):
+        uname = self.textName.text()
+        passw = self.textPass.text()
+        connection = sqlite3.connect("user.db")
+        result = connection.execute("SELECT * FROM user WHERE USERNAME = ? AND PASSWORD = ?", (uname, passw))
+        if result.fetchall():
             self.accept()
         else:
+            print("invalid login")
             QtWidgets.QMessageBox.warning(
                 self, 'Error', 'Bad user or password')
+
+    # def handleLogin(self):
+    #     if (self.textName.text() == 'Admin' and
+    #         self.textPass.text() == '1234'):
+    #         self.accept()
+    #     else:
+    #         QtWidgets.QMessageBox.warning(
+    #             self, 'Error', 'Bad user or password')
 
 class Example(QMainWindow):
 
@@ -160,14 +177,17 @@ class stackedExample(QWidget):
         self.tab1 = QWidget()
         self.tab2 = QWidget()
         self.tab3 = QWidget()
+        self.tab4 = QWidget()
 
         tabs.addTab(self.tab1, 'Add Quantity')
         tabs.addTab(self.tab2, 'Reduce Quantity')
         tabs.addTab(self.tab3, 'Delete Stock')
+        tabs.addTab(self.tab4, 'Bulk Upload')
 
         self.tab1UI()
         self.tab2UI()
         self.tab3UI()
+        self.tab4UI()
 
         layout.addWidget(tabs)
         self.stack2.setLayout(layout)
@@ -225,6 +245,7 @@ class stackedExample(QWidget):
         self.ok_del.clicked.connect(self.call_del)  # need to write function to delete stock
         cancel.clicked.connect(self.stock_name_del.clear)
 
+
     def call_del(self):
         now = datetime.datetime.now()
         stock_del_date_time = now.strftime("%Y-%m-%d %H:%M")
@@ -243,7 +264,59 @@ class stackedExample(QWidget):
         except Exception:
             print('Exception')
 
+    def tab4UI(self):
+        layout = QVBoxLayout()
+        self.choose_file = QPushButton()
+        self.choose_file.setText("Choose File")
 
+        self.upload_table = QTableWidget()
+        self.upload_table.setColumnCount(6)
+        self.upload_table.setHorizontalHeaderLabels(['Transaction ID', 'Stock Name', 'Transaction Type', 'Date', 'Time', 'Transaction Specific'])
+        self.upload_table.setColumnWidth(0, 150)
+        self.upload_table.setColumnWidth(1, 150)
+        self.upload_table.setColumnWidth(2, 150)
+        self.upload_table.setColumnWidth(3, 100)
+        self.upload_table.setColumnWidth(4, 100)
+        self.upload_table.setColumnWidth(5, 500)
+        # self.upload_table.insertRow(0)
+        # self.upload_table.setItem(0, 0, QTableWidgetItem('Transaction ID'))
+        # self.upload_table.setItem(0, 1, QTableWidgetItem('Stock Name'))
+        # self.upload_table.setItem(0, 2, QTableWidgetItem('Transaction Type'))
+        # self.upload_table.setItem(0, 3, QTableWidgetItem('Date'))
+        # self.upload_table.setItem(0, 4, QTableWidgetItem('Time'))
+        # self.upload_table.setItem(0, 5, QTableWidgetItem('Transaction Specific'))
+        self.upload_table.setRowHeight(0, 20)
+
+        layout.addWidget(self.choose_file)
+        layout.addWidget(self.upload_table)
+        self.choose_file.clicked.connect(self.open_file_dialogue)
+        self.tab4.setLayout(layout)
+
+    def open_file_dialogue(self):
+        filenames, _ = QFileDialog.getOpenFileNames(
+            None,
+            "QFileDialog.getOpenFileNames()",
+            "",
+            # "All Files (*);;Python Files (*.py);;Text Files (*.txt)",
+            "All Files (*);;Excel Files (*.xlsx);;Text Files (*.csv);;PDF Files (*.pdf)",
+        )
+
+        valid_file_ext = ['csv', 'xlsx', 'pdf']
+        df = pd.DataFrame()
+        invalid_files = []
+
+        if filenames:
+            for filename in filenames:
+                fileextension = re.search(".*\.([^\.]+)$", filename).group(1)
+                print(f'{fileextension}: {filename}')
+                if fileextension in valid_file_ext:
+                    print('continue')
+                else:
+                    QtWidgets.QMessageBox.warning(
+                        self, 'Error', f'The following files have invalid file type {invalid_files}')
+
+    def extract_pdf(self):
+        print('extract pdf')
 
     def call_add(self):
         now = datetime.datetime.now()
@@ -325,20 +398,22 @@ class stackedExample(QWidget):
         self.trans_text = QLineEdit()
 
         self.Trans.setColumnCount(6)
+        self.Trans.setHorizontalHeaderLabels(
+            ['Transaction ID', 'Stock Name', 'Transaction Type', 'Date', 'Time', 'Transaction Specific'])
         self.Trans.setColumnWidth(0, 150)
         self.Trans.setColumnWidth(1, 150)
         self.Trans.setColumnWidth(2, 150)
         self.Trans.setColumnWidth(3, 100)
         self.Trans.setColumnWidth(4, 100)
         self.Trans.setColumnWidth(5, 500)
-        self.Trans.insertRow(0)
-        self.Trans.setItem(0, 0, QTableWidgetItem('Transaction ID'))
-        self.Trans.setItem(0, 1, QTableWidgetItem('Stock Name'))
-        self.Trans.setItem(0, 2, QTableWidgetItem('Transaction Type'))
-        self.Trans.setItem(0, 3, QTableWidgetItem('Date'))
-        self.Trans.setItem(0, 4, QTableWidgetItem('Time'))
-        self.Trans.setItem(0, 5, QTableWidgetItem('Transaction Specific'))
-        self.Trans.setRowHeight(0, 50)
+        # self.Trans.insertRow(0)
+        # self.Trans.setItem(0, 0, QTableWidgetItem('Transaction ID'))
+        # self.Trans.setItem(0, 1, QTableWidgetItem('Stock Name'))
+        # self.Trans.setItem(0, 2, QTableWidgetItem('Transaction Type'))
+        # self.Trans.setItem(0, 3, QTableWidgetItem('Date'))
+        # self.Trans.setItem(0, 4, QTableWidgetItem('Time'))
+        # self.Trans.setItem(0, 5, QTableWidgetItem('Transaction Specific'))
+        self.Trans.setRowHeight(0, 20)
 
         layout.addWidget(self.Trans)
         layout.addWidget(self.lbl_trans_text)
