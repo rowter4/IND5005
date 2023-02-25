@@ -136,6 +136,7 @@ class stackedExample(QWidget):
         layout = QFormLayout()
 
         self.ok = QPushButton('Add Stock', self)
+
         cancel = QPushButton('Cancel', self)
 
         self.supplier_name = QLineEdit()
@@ -148,7 +149,7 @@ class stackedExample(QWidget):
         layout.addRow("Item No.", self.item_no)
 
         self.serial_no = QLineEdit()
-        layout.addRow("Serial Number", self.serial_no)
+        layout.addRow("Serial No.", self.serial_no)
 
         self.description = QLineEdit()
         layout.addRow("Description", self.description)
@@ -177,15 +178,21 @@ class stackedExample(QWidget):
 
         self.stack1.setLayout(layout)
 
+
+    # Follow this variable names
     def on_click(self):
         now = datetime.datetime.now()
+        supplier_name_inp = self.supplier_name.text().replace(' ','_')
         item_name_inp = self.item_name.text().replace(' ','_').lower()
+        item_no_inp = self.item_no.upper()
         description_inp = self.description.text().lower()
-        stock_count_inp = int(self.reorder_days.text())
-        stock_cost_inp = int(self.reorder_qty.text())
-        #print(item_name_inp,stock_count_inp,stock_cost_inp)
+        unit_inp = self.unit
+        reorder_lvl_inp = int(self.reorder_lvl.text())
+        reorder_days_inp = int(self.reorder_days.text())
+        reorder_qty_inp = int(self.reorder_qty.text())
         stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
-        d = mp.insert_prod(item_name_inp,description_inp, stock_count_inp,stock_cost_inp,stock_add_date_time)
+
+        d = mp.insert_prod(supplier_name_inp,item_name_inp, item_no_inp,description_inp,unit_inp,reorder_lvl_inp,reorder_days_inp,reorder_qty_inp,stock_add_date_time)
         print(d)
         #Need to add the above details to table
 
@@ -213,14 +220,13 @@ class stackedExample(QWidget):
         self.stack2.setLayout(layout)
 
     def tab1UI(self):
+        # Function for add stock tab
         layout = QFormLayout()
         # Buttons to press once fields have been entered
-        ## Requires confirmation once add stock button is pressed
+        ## Requires confirmation once add qty button is pressed
 
         self.ok_add = QPushButton('Add Item', self)
         cancel = QPushButton('Cancel', self)
-
-        ## To change to choose from added stock inventory list
 
         self.item_no_add = QLineEdit()
         layout.addRow("Item No.", self.item_no_add)
@@ -242,12 +248,16 @@ class stackedExample(QWidget):
         layout.addWidget(cancel)
         self.tab1.setLayout(layout)
 
-        self.ok_add.clicked.connect(self.call_add)       #need to write function to add quantity
+        self.ok_add.clicked.connect(self.call_add)       #need to write function to add quantity based on user name and password
         field_array_tab1UI = [self.item_no_add, self.stock_count_add, self.cost_per_item, self.location, self.expiry_date]
         for x in field_array_tab1UI:
             cancel.clicked.connect(x.clear)
 
     def tab2UI(self):
+        # Function for reduce stock tab
+
+        ## Requires confirmation once reduce qty button is pressed
+
         layout = QFormLayout()
         self.ok_red = QPushButton('Reduce Stock', self)
         cancel = QPushButton('Cancel', self)
@@ -255,12 +265,14 @@ class stackedExample(QWidget):
         self.item_no_red = QLineEdit()
         layout.addRow("Item No.", self.item_no_red)
 
+        self.serial_no_red = QLineEdit()
+        layout.addRow("Serial No.", self.serial_no_red)
+
         self.location_red = QLineEdit()
         layout.addRow("Location", self.location_red)
 
         self.stock_count_red = QLineEdit()
         layout.addRow("Quantity to Reduce", self.stock_count_red)
-
 
         layout.addWidget(self.ok_red)
         layout.addWidget(cancel)
@@ -272,6 +284,8 @@ class stackedExample(QWidget):
             cancel.clicked.connect(x.clear)
 
     def tab3UI(self):
+
+        # Function for del stock tab
         layout = QFormLayout()
         self.ok_del = QPushButton('Delete Stock', self)
         cancel = QPushButton('Cancel', self)
@@ -291,6 +305,13 @@ class stackedExample(QWidget):
         stock_del_date_time = now.strftime("%Y-%m-%d %H:%M")
         item_name = self.item_name_del.text().replace(' ','_').lower()
         mp.remove_stock(item_name,stock_del_date_time)
+
+    def call_add(self):
+        now = datetime.datetime.now()
+        stock_call_add_date_time = now.strftime("%Y-%m-%d %H:%M")
+        item_name = self.item_name_add.text().replace(' ','_').lower()
+        stock_val = int(self.stock_count_add.text())
+        mp.update_quantity(item_name, stock_val, stock_call_add_date_time)
 
     def call_red(self):
         now = datetime.datetime.now()
@@ -404,12 +425,7 @@ class stackedExample(QWidget):
     def extract_pdf(self):
         print('extract pdf')
 
-    def call_add(self):
-        now = datetime.datetime.now()
-        stock_call_add_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_add.text().replace(' ','_').lower()
-        stock_val = int(self.stock_count_add.text())
-        mp.update_quantity(item_name, stock_val, stock_call_add_date_time)
+
 
 
     def stack3UI(self):
@@ -426,6 +442,7 @@ class stackedExample(QWidget):
         self.lbl_conf_text.setText("Enter the search keyword:")
         self.conf_text = QLineEdit()
 
+        #Add columns here
         self.View.setColumnCount(3)
         self.View.setColumnWidth(0, 250)
         self.View.setColumnWidth(1, 250)
