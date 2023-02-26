@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets
 import os
 import datetime
+import check_input
 
 import manipulation as mp
-from PyQt5.QtCore import QRect, Qt
+from PyQt5.QtCore import QRect, Qt, QDate
 from PyQt5.QtWidgets import QTabWidget, QFileDialog
 from PyQt5.QtWidgets import QTableWidget
 from PyQt5.QtWidgets import QTableWidgetItem
@@ -164,7 +165,7 @@ class stackedExample(QWidget):
         layout.addRow("Description", self.description)
 
         self.unit = QLineEdit()
-        layout.addRow("Unit", self.unit)
+        layout.addRow("Unit of Measurement", self.unit)
 
         self.reorder_lvl = QLineEdit()
         layout.addRow("Reorder Level", self.reorder_lvl)
@@ -179,28 +180,56 @@ class stackedExample(QWidget):
         layout.addWidget(cancel)
 
         # Confirmation function called when ok is clicked
-        self.ok.clicked.connect(self.confirmation)
+        self.ok.clicked.connect(self.confirmation_add_inv)
 
         # Clear all fields when cancel is clicked
-        field_array_stack1UI = [self.supplier_name, self.item_name, self.item_no, self.serial_no, self.description, self.unit, self.reorder_lvl, self.reorder_days,
-                              self.reorder_qty]
-        for x in field_array_stack1UI:
-            cancel.clicked.connect(x.clear)
+        self.field_dict_stack1UI = {"Supplier Name": self.supplier_name,
+                                    "Item Name": self.item_name,
+                                    "Item No.": self.item_no,
+                                    "Serial No.": self.serial_no,
+                                    "Description": self.description,
+                                    "Unit of Measurement": self.unit,
+                                    "Reorder Level": self.reorder_lvl,
+                                    "Days Per Reorder": self.reorder_days,
+                                    "Reorder Quantity": self.reorder_qty}
+        # self.field_array_stack1UI = [self.supplier_name, self.item_name, self.item_no, self.serial_no, self.description, self.unit, self.reorder_lvl, self.reorder_days,
+        #                       self.reorder_qty]
+        for key, value in self.field_dict_stack1UI.items():
+            cancel.clicked.connect(value.clear)
 
         self.stack1.setLayout(layout)
 
-    def confirmation(self):
-        # Follow this variable names
+    def confirmation_add_inv(self):
+        # Check for empty fields
+        empty_fields_array = []
+        incorrect_dtype_array = []
+        for key, value in self.field_dict_stack1UI.items():
+            if check_input.check_empty_field(value.text()) == 'blank':
+                empty_fields_array.append(key)
+            # if check_input.check_dtype(value.text()) == 'error':
+            #     incorrect_dtype_array.append(key)
+
+        if empty_fields_array:
+            # there are empty fields
+            empty_fields_message = "\n".join(empty_fields_array)
+            error_message_box = QtWidgets.QMessageBox()
+            error_message_box.warning(
+                self, 'Error', f'The following fields are empty. Please enter values \n {empty_fields_message}')
+            return 'Error'
+
+
+        # Follow this variable names (inp: input)
         now = datetime.datetime.now()
-        supplier_name_inp = self.supplier_name.text().replace(' ', '_')
-        item_name_inp = self.item_name.text().replace(' ', '_').lower()
-        item_no_inp = self.item_no.text()
-        description_inp = self.description.text().lower()
+        supplier_name_inp = self.supplier_name.text().replace(' ', '_').upper()
+        item_name_inp = self.item_name.text().replace(' ', '_').upper()
+        item_no_inp = self.item_no.text().upper()
+        description_inp = self.description.text().upper()
         unit_inp = self.unit.text()
-        reorder_lvl_inp = int(self.reorder_lvl.text())
-        reorder_days_inp = int(self.reorder_days.text())
-        reorder_qty_inp = int(self.reorder_qty.text())
+        reorder_lvl_inp = self.reorder_lvl.text()
+        reorder_days_inp = self.reorder_days.text()
+        reorder_qty_inp = self.reorder_qty.text()
         stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
+
 
         confirmation_box = QMessageBox.question(self, 'Confirmation',
                                             f"Please Confirm the Following Details:\n"
@@ -218,13 +247,6 @@ class stackedExample(QWidget):
             d = mp.insert_prod(supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp,
                             reorder_days_inp, reorder_qty_inp, stock_add_date_time)
             print(d)
-
-        else:
-            field_array_stack1UI = [self.supplier_name, self.item_name, self.item_no, self.serial_no, self.description,
-                                self.unit, self.reorder_lvl, self.reorder_days,
-                                self.reorder_qty]
-            for x in field_array_stack1UI:
-                x.clear
 
     def stack2UI(self):
 
@@ -253,10 +275,11 @@ class stackedExample(QWidget):
         # Function for add stock tab
         layout = QFormLayout()
 
-        #Calendar widget
+        # Calendar widget
         self.expiry_add = QDateEdit(self)
         self.expiry_add.setDisplayFormat('dd-MM-yyyy')
         self.expiry_add.setCalendarPopup(True)
+        self.expiry_add.setDate(QDate(7999,12,31))
 
         # Add item button
         self.ok_add = QPushButton('Add Item', self)
@@ -276,53 +299,52 @@ class stackedExample(QWidget):
         layout.addRow("Location of Item", self.location_add)
 
         # Create the label for the date field
-        self.expiry_lbl = QLabel("Expiry Date", self)
-        self.expiry_lbl.setBuddy(self.expiry_add)
+        layout.addRow("Expiry Date", self.expiry_add)
+        # self.expiry_add.dateChanged.connect(self.on_select_date)
 
-        layout.addRow(self.expiry_lbl)
-        layout.addWidget(self.expiry_add)
         layout.addWidget(self.ok_add)
         layout.addWidget(cancel)
 
-        self.ok_add.clicked.connect(self.confirmation)
+        self.ok_add.clicked.connect(self.confirmation_add_stock)
 
         self.tab1.setLayout(layout)
 
               #need to write function to add quantity based on user name and password
 
-        field_array_tab1UI = [self.item_no_add, self.stock_count_add, self.cost_per_item_add, self.location_add,
-                              self.expiry_add]
+        field_array_tab1UI = [self.item_no_add, self.stock_count_add, self.cost_per_item_add, self.location_add]
 
         for x in field_array_tab1UI:
             cancel.clicked.connect(x.clear)
 
-        def confirmation(self):
-            # Follow this variable names
-            now = datetime.datetime.now()
-            item_no_add = self.item_no.text()
-            stock_count_add = int(self.stock_count_add.text())
-            cost_per_item_add = float(self.cost_per_item_add.text())
-            location_add = self.location_add.text()
-            expiry_add = self.expiry_add.text()
-            stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
 
-            confirmation_box = QMessageBox.question(self, 'Confirmation',
-                                            f"Please confirm if you wish to add the following details:\n"
-                                            f"Item No.: {self.item_no_add}\n"
-                                            f"Stock Count: {self.stock_count_add}\n"
-                                            f"Cost per Item: {self.cost_per_item_add}\n"
-                                            f"Location: {self.location_add}\n"
-                                            f"Expiry Date: {self.expiry_add}\n",
-                                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
-            if confirmation_box == QMessageBox.Yes:
-                self.ok_add.clicked.connect(self.call_add)
+    def confirmation_add_stock(self):
+        # print(field_array_tab1UI)
+        # Follow this variable names
+        now = datetime.datetime.now()
+        item_no_add = self.item_no_add.text()
+        stock_count_add = int(self.stock_count_add.text())
+        cost_per_item_add = float(self.cost_per_item_add.text())
+        location_add = self.location_add.text()
+        expiry_add = self.expiry_add.text()
+        print(expiry_add)
+        stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
 
-            else:
-                field_array_tab1UI = [self.item_no_add, self.stock_count_add, self.cost_per_item_add, self.location_add,
-                                    self.expiry_add]
-                for x in field_array_tab1UI:
-                    x.clear
+        confirmation_box = QMessageBox.question(self, 'Confirmation',
+                                        f"Please confirm if you wish to add the following details:\n"
+                                        f"Item No.: {item_no_add}\n"
+                                        f"Stock Count: {stock_count_add}\n"
+                                        f"Cost per Item: {cost_per_item_add}\n"
+                                        f"Location: {location_add}\n"
+                                        f"Expiry Date: {expiry_add}\n",
+                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if confirmation_box == QMessageBox.Yes:
+            self.ok_add.clicked.connect(self.call_add)
+
+    # def on_select_date(self, date):
+    #     self.expiry_date_add = date.toString(Qt.ISODate)
+    #     print(date)
 
     def tab2UI(self):
         # Function for reduce stock tab
@@ -374,13 +396,13 @@ class stackedExample(QWidget):
     def call_del(self):
         now = datetime.datetime.now()
         stock_del_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_del.text().replace(' ','_').lower()
+        item_name = self.item_name_del.text().replace(' ','_').upper()
         mp.remove_stock(item_name,stock_del_date_time)
 
     def call_add(self):
         now = datetime.datetime.now()
         stock_call_add_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_add.text().replace(' ','_').lower()
+        item_name = self.item_name_add.text().replace(' ','_').upper()
         stock_val = int(self.stock_count_add.text())
         mp.update_quantity(item_name, stock_val, stock_call_add_date_time)
 
@@ -514,14 +536,12 @@ class stackedExample(QWidget):
         self.conf_text = QLineEdit()
 
         #Add columns here
+        stack3UI_headers = ['Stock Name', 'Quantity', 'Cost(Per Unit)']
         self.View.setColumnCount(3)
+        self.View.setHorizontalHeaderLabels(stack3UI_headers)
         self.View.setColumnWidth(0, 250)
         self.View.setColumnWidth(1, 250)
         self.View.setColumnWidth(2, 200)
-        self.View.insertRow(0)
-        self.View.setItem(0, 0, QTableWidgetItem('Stock Name'))
-        self.View.setItem(0, 1, QTableWidgetItem('Quantity'))
-        self.View.setItem(0, 2, QTableWidgetItem('Cost(Per Unit)'))
 
 
 
