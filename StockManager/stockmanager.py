@@ -4,7 +4,7 @@ import datetime
 
 import manipulation as mp
 from PyQt5.QtCore import QRect, Qt
-from PyQt5.QtWidgets import QTabWidget, QFileDialog
+from PyQt5.QtWidgets import QTabWidget, QFileDialog, QAbstractItemView
 from PyQt5.QtWidgets import QTableWidget
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QVBoxLayout
@@ -268,17 +268,31 @@ class stackedExample(QWidget):
         layout = QVBoxLayout()
         self.choose_file = QPushButton()
         self.choose_file.setText("Choose File")
+        self.choose_file.clicked.connect(self.open_file_dialogue)
         self.choose_file.setMinimumWidth(50)
         self.choose_file.setMaximumWidth(100)
 
-        self.confirm_submit = QPushButton()
-        self.confirm_submit.setText("Confirm")
-        self.confirm_submit.setMinimumWidth(50)
-        self.confirm_submit.setMaximumWidth(100)
+        widget_btm_buttons = QWidget()
+        layout_btm_buttons = QHBoxLayout()
+
+        self.clear_table_button = QPushButton()
+        self.clear_table_button.setText("Clear")
+        self.clear_table_button.setFixedWidth(80)
+
+        self.confirm_submit_upload_button = QPushButton()
+        self.confirm_submit_upload_button.setText("Confirm")
+        self.confirm_submit_upload_button.setFixedWidth(80)
+
+        layout_btm_buttons.addWidget(self.clear_table_button)
+        layout_btm_buttons.addWidget(self.confirm_submit_upload_button)
+        widget_btm_buttons.setLayout(layout_btm_buttons)
+        # self.setCellWidget(2,0,widget_btm_buttons)
+
 
         headers = ['Invoice No.', 'Item No.', 'Location', 'Supplier', 'Item Name', 'Quantity', 'Inventory Value']
 
         self.upload_table = QTableWidget()
+
         self.upload_table.setColumnCount(7)
         self.upload_table.setHorizontalHeaderLabels(headers)
         self.upload_table.setColumnWidth(0, 100)
@@ -288,30 +302,31 @@ class stackedExample(QWidget):
         self.upload_table.setColumnWidth(4, 100)
         self.upload_table.setColumnWidth(5, 100)
         self.upload_table.setColumnWidth(6, 100)
-        # self.upload_table.insertRow(0)
-        # self.upload_table.setItem(0, 0, QTableWidgetItem('Transaction ID'))
-        # self.upload_table.setItem(0, 1, QTableWidgetItem('Stock Name'))
-        # self.upload_table.setItem(0, 2, QTableWidgetItem('Transaction Type'))
-        # self.upload_table.setItem(0, 3, QTableWidgetItem('Date'))
-        # self.upload_table.setItem(0, 4, QTableWidgetItem('Time'))
-        # self.upload_table.setItem(0, 5, QTableWidgetItem('Transaction Specific'))
+
+        self.df = pd.DataFrame()
+
         self.upload_table.setRowHeight(0, 20)
 
         layout.addWidget(self.choose_file)
         layout.addWidget(self.upload_table)
-        self.choose_file.clicked.connect(self.open_file_dialogue)
-        layout.addWidget(self.confirm_submit)
-        layout.setAlignment(self.confirm_submit, Qt.AlignRight)
+
+        layout.addWidget(widget_btm_buttons)
+        layout.setAlignment(widget_btm_buttons, Qt.AlignRight)
+
+        self.clear_table_button.clicked.connect(self.clear_upload_table)
+        self.confirm_submit_upload_button.clicked.connect(self.update_DB_upload)
         self.tab4.setLayout(layout)
 
-    def updateTable(self, data):
+    def updateTable(self):
         # Clear existing table content
 
-        self.upload_table.setRowCount(data.shape[0])
+        self.upload_table.setRowCount(self.df.shape[0])
 
-        for row_num, row_data in data.iterrows():
+        for row_num, row_data in self.df.iterrows():
             for col_num, cell_data in enumerate(row_data):
                 self.upload_table.setItem(row_num, col_num, QTableWidgetItem(cell_data))
+
+        self.upload_table.itemChanged.connect(self.on_item_changed)
 
     def open_file_dialogue(self):
         filenames, _ = QFileDialog.getOpenFileNames(
@@ -323,46 +338,97 @@ class stackedExample(QWidget):
         )
 
 
-        df = pd.DataFrame()
         invalid_files = []
+        error_opening_files = []
         pdf_files = []
         headers = ['Invoice No.', 'Item No.', 'Location', 'Supplier', 'Item Name', 'Quantity', 'Inventory Value']
-        data = pd.DataFrame(columns=headers)
+        self.df = pd.DataFrame(columns=headers)
 
         if filenames:
             for filename in filenames:
                 fileextension = re.search(".*\.([^\.]+)$", filename).group(1)
-                print(f'{fileextension}: {filename}')
+                # print(f'{fileextension}: {filename}')
                 if fileextension == 'pdf':
-
                     pdf_files.append(filename)
                 elif fileextension == 'csv':
-                    read_csv_data = pd.read_csv(filename)
-                    data = pd.concat([data, read_csv_data])
+                    try:
+                        read_csv_data = pd.read_csv(filename)
+                        if self.check_uploadFile_schema(read_csv_data, headers) == 1:
+                            invalid_files.append(filename)
+                        else:
+                            self.df = pd.concat([self.df, read_csv_data])
+                    except:
+                        error_opening_files.append(filename)
                 elif fileextension in ['xlsx', 'xls']:
-                    read_xls_data = pd.read_excel(filename)
-                    data = pd.concat([data, read_xls_data])
+                    try:
+                        read_xls_data = pd.read_excel(filename)
+                        if self.check_uploadFile_schema(read_xls_data, headers) == 1:
+                            invalid_files.append(filename)
+                        else:
+                            self.df = pd.concat([self.df, read_xls_data])
+                    except:
+                        error_opening_files.append(filename)
                 else:
                     invalid_files.append(filename)
 
-            invalid_files_message = "\n".join(invalid_files)
-            font = QFont()
-            font.setFamily("Calibri")
-            font.setPointSize(10)
+        invalid_files_message = "\n".join(invalid_files)
+        error_opening_files_message = "\n".join(error_opening_files)
+        font = QFont('Calibri', 10)
 
         if invalid_files_message:
             error_message_box = QtWidgets.QMessageBox()
             error_message_box.setFont(font)
             error_message_box.warning(
-                self, 'Error', f'The following files have invalid file type \n {invalid_files_message}')
+                self, 'Error',
+                f'The following files have invalid file type or invalid format \n {invalid_files_message}')
 
-        data = data.fillna('')
-        data = data.astype(str)
-        self.updateTable(data)
+        if error_opening_files_message:
+            error_message_box = QtWidgets.QMessageBox()
+            error_message_box.setFont(font)
+            error_message_box.warning(
+                self, 'Error',
+                f'Unable to read the following files. Please check if there are any restrictions on the file. \n {error_opening_files_message}')
 
+        self.df = self.df.fillna('')
+        self.df = self.df.astype(str)
+        self.updateTable()
+
+
+    def on_item_changed(self, item):
+        row = item.row()
+        col = item.column()
+        value = item.text()
+        self.df.iloc[row, col] = value
+        # print(f"Row:{row}, Col:{col}, value:{value}")
 
     def extract_pdf(self):
         print('extract pdf')
+
+
+    def clear_upload_table(self):
+        # self.upload_table.clearContents()
+        while self.upload_table.rowCount() > 0 :
+            self.upload_table.removeRow(0)
+        self.df = pd.DataFrame()
+
+    def update_DB_upload(self):
+        self.df.to_csv('/Users/nataliekeong/Downloads/Output_updated.csv')
+
+        while self.upload_table.rowCount() > 0:
+            self.upload_table.removeRow(0)
+
+        if self.df.shape[0] > 0:
+            success_message_box = QtWidgets.QMessageBox()
+            success_message_box.warning(self, 'Message', f'Successfully updated database')
+        self.df = pd.DataFrame()
+
+
+    def check_uploadFile_schema(self, df, headers):
+        if list(df.columns) == headers:
+            return 0
+        else:
+            return 1
+
 
     def call_add(self):
         now = datetime.datetime.now()
