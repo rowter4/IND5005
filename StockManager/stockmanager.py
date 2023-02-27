@@ -1,7 +1,10 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 import os
 import datetime
 
+import sys
+
+from numpy import double
 import manipulation as mp
 from PyQt5.QtCore import QRect, Qt
 from PyQt5.QtWidgets import QTabWidget, QFileDialog
@@ -15,23 +18,29 @@ from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QListWidget
 from PyQt5.QtWidgets import QStackedWidget
 from PyQt5.QtWidgets import (QWidget, QPushButton, QMainWindow,
-                             QHBoxLayout, QAction)
+                             QHBoxLayout, QAction, QApplication, QLabel, QLineEdit,QMessageBox)
 
-import sqlite3
+# import sqlite3
 import re
 import pandas as pd
+import mysql.connector as mc
 
-try:
-    conn = sqlite3.connect('stock.db')
-    c = conn.cursor()
-    c.execute("""CREATE TABLE stock (
-                name text,
-                quantity integer,
-                cost integer
-                ) """)
-    conn.commit()
-except Exception:
-    print('DB exists')
+mydb = mc.connect(host='localhost', password='2023nusproject%', user='root', database='dr_db')
+if mydb.is_connected():
+    print("Connection established....")
+    mycursor = mydb.cursor()
+
+# try:
+#     conn = sqlite3.connect('stock.db')
+#     c = conn.cursor()
+#     c.execute("""CREATE TABLE stock (
+#                 name text,
+#                 quantity integer,
+#                 cost integer
+#                 ) """)
+#     conn.commit()
+# except Exception:
+#     print('DB exists')
 
 
 class Login(QtWidgets.QDialog):
@@ -50,17 +59,32 @@ class Login(QtWidgets.QDialog):
         layout.addWidget(self.textPass)
         layout.addWidget(self.buttonLogin)
 
-    def login_check(self):
+    def login_check(self, parent=None):
         uname = self.textName.text()
         passw = self.textPass.text()
-        connection = sqlite3.connect("user.db")
-        result = connection.execute("SELECT * FROM user WHERE USERNAME = ? AND PASSWORD = ?", (uname, passw))
-        if result.fetchall():
+        # connection = sqlite3.connect("user.db")
+        self.accept()
+        sql_query = "SELECT * FROM user where user_id = '%s' AND password = '%s'" % (uname,passw) 
+        # result = mycursor.execute( )
+        # result = connection.execute("SELECT * FROM user WHERE USERNAME = ? AND PASSWORD = ?", (uname, passw))
+        mycursor.execute(sql_query)
+        myresults = mycursor.fetchall()
+        print(myresults, "Result from Query")
+        if myresults:
             self.accept()
+            print("Login Credentials is Valid")
+            # loginFlag = True
+            # if login.exec_() == QtWidgets.QDialog.Accepted:
+            #     window = Example()
+            #     print("Able to log in")
+            #     # sys.exit(app.exec_())
         else:
             print("invalid login")
-            QtWidgets.QMessageBox.warning(
-                self, 'Error', 'Bad user or password')
+            QtWidgets.QMessageBox.warning(self, 'Error', 'Bad user or password')
+            # login = Login()
+            # Login.__init__(self)
+           
+           
 
     # def handleLogin(self):
     #     if (self.textName.text() == 'Admin' and
@@ -75,7 +99,6 @@ class Example(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
         self.initUI()
 
     def initUI(self):
@@ -148,6 +171,10 @@ class stackedExample(QWidget):
         self.stock_cost = QLineEdit()
         layout.addRow("Cost of Stock (per item)", self.stock_cost)
 
+        self.stock_serialNo = QLineEdit()
+        layout.addRow("Serial Number (Numbers)", self.stock_serialNo)
+
+
         layout.addWidget(self.ok)
         layout.addWidget(cancel)
 
@@ -156,18 +183,33 @@ class stackedExample(QWidget):
         cancel.clicked.connect(self.stock_name.clear)
         cancel.clicked.connect(self.stock_cost.clear)
         cancel.clicked.connect(self.stock_count.clear)
+        cancel.clicked.connect(self.stock_serialNo.clear)
         self.stack1.setLayout(layout)
 
     def on_click(self):
         now = datetime.datetime.now()
         stock_name_inp = self.stock_name.text().replace(' ','_').lower()
         stock_count_inp = int(self.stock_count.text())
-        stock_cost_inp = int(self.stock_cost.text())
-        #print(stock_name_inp,stock_count_inp,stock_cost_inp)
+        stock_cost_inp = double(self.stock_cost.text())
+        stock_serialNo_inp = int(self.stock_serialNo.text())
+
+        print(stock_name_inp,stock_count_inp,stock_cost_inp, stock_serialNo_inp, "Details from Add Stock" )
+
         stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
-        d = mp.insert_prod(stock_name_inp,stock_count_inp,stock_cost_inp,stock_add_date_time)
-        print(d)
+
+        # Below is the old database
+            # d = mp.insert_prod(stock_name_inp,stock_count_inp,stock_cost_inp,stock_add_date_time)
+            # print(d)
         #Need to add the above details to table
+
+        mycursor = mydb.cursor()
+        query = "INSERT INTO STOCK_1 (name,sn,quantity,cost) VALUES (%s,%s,%s,%s)"
+        value = (stock_name_inp, stock_serialNo_inp, stock_count_inp, stock_cost_inp)
+        mycursor.execute(query,value)
+        mydb.commit()
+        # self.labelResult.setText("Data Inserted")
+
+
 
     def stack2UI(self):
 
@@ -374,9 +416,9 @@ class stackedExample(QWidget):
 
     def stack3UI(self):
 
-        table = mp.show_stock()
+        # table = mp.show_stock()
         print('show')
-        print(table)
+        # print(table)
         layout = QVBoxLayout()
         self.srb = QPushButton()
         self.srb.setText("Get Search Result.")
@@ -386,15 +428,49 @@ class stackedExample(QWidget):
         self.lbl_conf_text.setText("Enter the search keyword:")
         self.conf_text = QLineEdit()
 
-        self.View.setColumnCount(3)
+        self.View.setColumnCount(4)
         self.View.setColumnWidth(0, 250)
         self.View.setColumnWidth(1, 250)
         self.View.setColumnWidth(2, 200)
+        self.View.setColumnWidth(3, 200)
+
         self.View.insertRow(0)
         self.View.setItem(0, 0, QTableWidgetItem('Stock Name'))
         self.View.setItem(0, 1, QTableWidgetItem('Quantity'))
         self.View.setItem(0, 2, QTableWidgetItem('Cost(Per Unit)'))
+        self.View.setItem(0, 3, QTableWidgetItem('Test2 Header'))
 
+        
+        
+        # self.tableWidget.setRowCount(0)
+        # for row_number, row_data in enumerate(results):
+        #     self.tableWidget.insertRow(row_number)
+
+        #     for column_number, data in enumerate(row_data):
+        #         self.tableWidget.setItem(row_number, column_number, QTableWidgetItem(str(data)) )
+
+
+       
+        
+        # print(results, "Results that are called from the stock")
+
+       
+
+        # cur = self.SQLiteDB.cursor()
+        # cur.execute("SELECT * FROM SQLTable")admi
+        # allSQLRows= cursor.fetchall()
+
+        # self.myTableWidget.setRowCount(len(stockResults)) ##set number of rows
+        # self.myTableWidget.setColumnCount(8) ##this is fixed for myTableWidget, ensure that both of your tables, sql and qtablewidged have the same number of columns
+
+        # row = 0
+        # while True:
+        #     sqlRow = mycursor.fetchone()
+        #     if sqlRow == None:
+        #         break ##stops while loop if there is no more lines in sql table
+        #     for col in range(0, 8): ##otherwise add row into tableWidget
+                # self.myTableWidget.setItem(row, col, QtGui.QTableWidgetItem(sqlRow[col]))
+            # row += 1
 
 
         layout.addWidget(self.View)
@@ -406,20 +482,28 @@ class stackedExample(QWidget):
         self.stack3.setLayout(layout)
 
     def show_search(self):
+
+        sql_query1 = "SELECT * FROM stock_1" 
+        mycursor.execute(sql_query1)
+        results = mycursor.fetchall()
+        print(results, "Results that are called from the stock")
+
         if self.View.rowCount()>1:
             for i in range(1,self.View.rowCount()):
                 self.View.removeRow(1)
 
 
         x_act = mp.show_stock()
+        print(x_act, "Result for Stock Count from SQL Lite")
         x = []
+
         if self.conf_text.text() != '':
-            for i in range(0,len(x_act)):
-                a = list(x_act[i])
+            for i in range(0,len(results)):
+                a = list(results[i])
                 if self.conf_text.text().lower() in a[0].lower():
                     x.append(a)
         else:
-            x = mp.show_stock()
+            x = results
 
         if len(x)!=0:
             for i in range(1,len(x)+1):
@@ -532,10 +616,21 @@ class stackedExample(QWidget):
 
 if __name__ == '__main__':
 
-    import sys
+    
+ 
     app = QtWidgets.QApplication(sys.argv)
+    print("Getting the login first")
+    loginFlag = False
     login = Login()
+    login.show()
 
     if login.exec_() == QtWidgets.QDialog.Accepted:
-        window = Example()
-        sys.exit(app.exec_())
+        # if loginFlag == True: 
+            window = Example()
+            print("Able to log in")
+        # sys.exit(app.exec_())
+
+   
+
+    
+    sys.exit(app.exec_())
