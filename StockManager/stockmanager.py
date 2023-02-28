@@ -214,7 +214,7 @@ class stackedExample(QWidget):
             empty_fields_message = "\n".join(empty_fields_array)
             error_message_box = QtWidgets.QMessageBox()
             error_message_box.warning(
-                self, 'Error', f'The following fields are empty. Please enter values \n {empty_fields_message}')
+                self, 'Error', f'Unable to add item to inventory. \nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
             return 'Error'
 
 
@@ -309,16 +309,33 @@ class stackedExample(QWidget):
 
         self.tab1.setLayout(layout)
 
-              #need to write function to add quantity based on user name and password
+        # Clear all fields when cancel is clicked
+        self.field_dict_tab1UI = {"Item No.": self.item_no_add,
+                                  "Quantity to Add": self.stock_count_add,
+                                  "Cost Per Item": self.cost_per_item_add,
+                                  "Location of Item": self.location_add,
+                                  "Expiry Date": self.expiry_add}
 
-        field_array_tab1UI = [self.item_no_add, self.stock_count_add, self.cost_per_item_add, self.location_add]
-
-        for x in field_array_tab1UI:
-            cancel.clicked.connect(x.clear)
-
-
+        for key, value in self.field_dict_tab1UI.items():
+            cancel.clicked.connect(value.clear)
 
     def confirmation_add_stock(self):
+        empty_fields_array = []
+        incorrect_dtype_array = []
+        for key, value in self.field_dict_tab1UI.items():
+            if check_input.check_empty_field(value.text()) == 'blank':
+                empty_fields_array.append(key)
+            # if check_input.check_dtype(value.text()) == 'error':
+            #     incorrect_dtype_array.append(key)
+
+        if empty_fields_array:
+            # there are empty fields
+            empty_fields_message = "\n".join(empty_fields_array)
+            error_message_box = QtWidgets.QMessageBox()
+            error_message_box.warning(
+                self, 'Error', f'Unable to add quantity.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
+            return 'Error'
+
         # print(field_array_tab1UI)
         # Follow this variable names
         now = datetime.datetime.now()
@@ -331,9 +348,9 @@ class stackedExample(QWidget):
         stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
 
         confirmation_box = QMessageBox.question(self, 'Confirmation',
-                                        f"Please confirm if you wish to add the following details:\n"
+                                        f"Please confirm if you wish to add the following details:\n\n"
                                         f"Item No.: {item_no_add}\n"
-                                        f"Stock Count: {stock_count_add}\n"
+                                        f"Qty to Add: {stock_count_add}\n"
                                         f"Cost per Item: {cost_per_item_add}\n"
                                         f"Location: {location_add}\n"
                                         f"Expiry Date: {expiry_add}\n",
@@ -361,20 +378,63 @@ class stackedExample(QWidget):
         self.serial_no_red = QLineEdit()
         layout.addRow("Serial No.", self.serial_no_red)
 
-        self.location_red = QLineEdit()
-        layout.addRow("Location", self.location_red)
-
         self.stock_count_red = QLineEdit()
         layout.addRow("Quantity to Reduce", self.stock_count_red)
+
+        self.location_red = QLineEdit()
+        layout.addRow("Location", self.location_red)
 
         layout.addWidget(self.ok_red)
         layout.addWidget(cancel)
         self.tab2.setLayout(layout)
+        self.ok_red.clicked.connect(self.confirmation_red_stock)
 
-        self.ok_red.clicked.connect(self.call_red)  # need to write function to reduce quantity
-        field_array_tab2UI = [self.item_no_red, self.serial_no_red, self.location_red, self.stock_count_red]
-        for x in field_array_tab2UI:
-            cancel.clicked.connect(x.clear)
+        # Clear all fields when cancel is clicked
+        self.field_dict_tab2UI = {"Item No.": self.item_no_red,
+                                  "Serial No.": self.serial_no_red,
+                                  "Quantity to Reduce": self.stock_count_red,
+                                  "Location": self.location_red}
+
+        for key, value in self.field_dict_tab2UI.items():
+            cancel.clicked.connect(value.clear)
+
+    def confirmation_red_stock(self):
+        empty_fields_array = []
+        incorrect_dtype_array = []
+        for key, value in self.field_dict_tab2UI.items():
+            if check_input.check_empty_field(value.text()) == 'blank':
+                empty_fields_array.append(key)
+            # if check_input.check_dtype(value.text()) == 'error':
+            #     incorrect_dtype_array.append(key)
+
+        if empty_fields_array:
+            # there are empty fields
+            empty_fields_message = "\n".join(empty_fields_array)
+            error_message_box = QtWidgets.QMessageBox()
+            error_message_box.warning(
+                self, 'Error', f'Unable to reduce quantity.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
+            return 'Error'
+        # print(field_array_tab1UI)
+        # Follow this variable names
+        now = datetime.datetime.now()
+        item_no_red = self.item_no_red.text()
+        serial_no_red = self.serial_no_red.text()
+        stock_count_red = int(self.stock_count_red.text())
+        location_red = self.location_red.text()
+        expiry_add = self.expiry_add.text()
+        print(expiry_add)
+        stock_red_date_time = now.strftime("%Y-%m-%d %H:%M")
+
+        confirmation_box = QMessageBox.question(self, 'Confirmation',
+                                                f"Please confirm if you wish to delete the following item from database:\n\n"
+                                                f"Item No.: {item_no_red}\n"
+                                                f"Serial No.: {serial_no_red}\n"
+                                                f"Qty to Reduce: {stock_count_red}\n"
+                                                f"Location: {location_red}\n",
+                                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if confirmation_box == QMessageBox.Yes:
+            self.ok_add.clicked.connect(self.call_red)
 
     def tab3UI(self):
 
@@ -383,15 +443,50 @@ class stackedExample(QWidget):
         self.ok_del = QPushButton('Delete Stock', self)
         cancel = QPushButton('Cancel', self)
 
-        self.item_name_del = QLineEdit()
-        layout.addRow("Stock Name", self.item_name_del)
+        self.item_no_del = QLineEdit()
+        layout.addRow("Item No.", self.item_no_del)
+
         layout.addWidget(self.ok_del)
         layout.addWidget(cancel)
         self.tab3.setLayout(layout)
+        self.ok_del.clicked.connect(self.confirmation_del_stock)
+        # self.ok_del.clicked.connect(self.call_del)  # need to write function to delete stock
+        # Clear all fields when cancel is clicked
+        self.field_dict_tab3UI = {"Item No.": self.item_no_del}
 
-        self.ok_del.clicked.connect(self.call_del)  # need to write function to delete stock
-        cancel.clicked.connect(self.item_name_del.clear)
+        for key, value in self.field_dict_tab3UI.items():
+            cancel.clicked.connect(value.clear)
 
+    def confirmation_del_stock(self):
+
+        empty_fields_array = []
+        incorrect_dtype_array = []
+        for key, value in self.field_dict_tab3UI.items():
+            if check_input.check_empty_field(value.text()) == 'blank':
+                empty_fields_array.append(key)
+            # if check_input.check_dtype(value.text()) == 'error':
+            #     incorrect_dtype_array.append(key)
+
+        if empty_fields_array:
+            # there are empty fields
+            empty_fields_message = "\n".join(empty_fields_array)
+            error_message_box = QtWidgets.QMessageBox()
+            error_message_box.warning(
+                self, 'Error', f'Unable to delete item.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
+            return 'Error'
+        # print(field_array_tab1UI)
+        # Follow this variable names
+        now = datetime.datetime.now()
+        item_no_del = self.item_no_del.text()
+        stock_del_date_time = now.strftime("%Y-%m-%d %H:%M")
+
+        confirmation_box = QMessageBox.question(self, 'Confirmation',
+                                                f"Please confirm if you wish to remove the following item:\n\n"
+                                                f"Item No.: {item_no_del}\n",
+                                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if confirmation_box == QMessageBox.Yes:
+            self.ok_add.clicked.connect(self.call_del)
 
     def call_del(self):
         now = datetime.datetime.now()
@@ -508,7 +603,7 @@ class stackedExample(QWidget):
             error_message_box = QtWidgets.QMessageBox()
             error_message_box.setFont(font)
             error_message_box.warning(
-                self, 'Error', f'The following files have invalid file type \n {invalid_files_message}')
+                self, 'Error', f'The following files have invalid file type\n{invalid_files_message}')
 
         data = data.fillna('')
         data = data.astype(str)
