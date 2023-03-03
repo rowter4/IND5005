@@ -271,20 +271,15 @@ class stackedExample(QWidget):
                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if confirmation_box == QMessageBox.Yes:
-            d = mp.insert_prod(supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp,
-                            reorder_days_inp, reorder_qty_inp, stock_add_date_time)
-            print(d)
+            # d = mp.insert_prod(supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp,
+            #                 reorder_days_inp, reorder_qty_inp, stock_add_date_time)
+            # print(d)
 
-
-        #integration into the mysql database (need to refer this)
-        # mycursor = mydb.cursor()
-        # query = "INSERT INTO STOCK_1 (name,sn,quantity,cost) VALUES (%s,%s,%s,%s)"
-        # value = (stock_name_inp, stock_serialNo_inp, stock_count_inp, stock_cost_inp)
-        # mycursor.execute(query,value)
-        # mydb.commit()
-
-
-
+            mycursor = mydb.cursor()
+            query = "INSERT INTO STOCK_LIST (supplier_name_inp,item_name_inp,item_no_inp,description_inp,unit_inp,reorder_lvl_inp,reorder_days_inp,reorder_qty_inp,stock_add_date_time) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            value = (supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp, reorder_days_inp, reorder_qty_inp, stock_add_date_time)
+            mycursor.execute(query,value)
+            mydb.commit()
 
 
     def stack2UI(self):
@@ -402,9 +397,24 @@ class stackedExample(QWidget):
     #     self.expiry_date_add = date.toString(Qt.ISODate)
     #     print(date)
 
+    def call_add(self):
+        now = datetime.datetime.now()
+        stock_call_add_date_time = now.strftime("%Y-%m-%d %H:%M")
+        # item_name = self.item_name_add.text().replace(' ','_').upper()
+        stock_val = (self.stock_count_add.text())
+
+        print("updated stock Value is : ", stock_val)
+
+        query = "UPDATE stock_list SET unit_inp = '"+stock_val+"' WHERE item_no_inp = '1'"
+        #need to update query to reflect the item no.
+        mycursor.execute(query)
+        mydb.commit()
+        print(mycursor.rowcount, "record(s) affected")
+
+        # mp.update_quantity(item_name, stock_val, stock_call_add_date_time)
+
     def tab2UI(self):
         # Function for reduce stock tab
-
         ## Requires confirmation once reduce qty button is pressed
 
         layout = QFormLayout()
@@ -475,6 +485,29 @@ class stackedExample(QWidget):
         if confirmation_box == QMessageBox.Yes:
             self.ok_add.clicked.connect(self.call_red)
 
+    def call_red(self):
+        now = datetime.datetime.now()
+        stock_red_date_time = now.strftime("%Y-%m-%d %H:%M")
+        item_name = self.item_name_red.text().replace(' ','_').lower()
+        try:
+            stock_val = -(int(self.stock_count_red.text()))
+            print(stock_val)
+            print(type(stock_val))
+
+            item_no = self.item_no_red.text()
+
+
+            print("updated stock Value is : ", stock_val)
+
+            query = "UPDATE stock_list SET unit_inp = '"+stock_val+"' WHERE item_no_inp = '"+item_no+"'"
+            mycursor.execute(query)
+            mydb.commit()
+            print(mycursor.rowcount, "record(s) affected")
+
+            # mp.update_quantity(item_name, stock_val, stock_red_date_time)
+        except Exception:
+            print('Exception')
+
     def tab3UI(self):
 
         # Function for del stock tab
@@ -531,26 +564,18 @@ class stackedExample(QWidget):
         now = datetime.datetime.now()
         stock_del_date_time = now.strftime("%Y-%m-%d %H:%M")
         item_name = self.item_name_del.text().replace(' ','_').upper()
-        mp.remove_stock(item_name,stock_del_date_time)
+        
+        
+        query = "DELETE FROM stock_list WHERE item_name='"+item_name+"' " 
+        mycursor.execute(query)
+        mydb.commit()
+        print(mycursor.rowcount, "record(s) affected")
+        
+        # mp.remove_stock(item_name,stock_del_date_time)
 
-    def call_add(self):
-        now = datetime.datetime.now()
-        stock_call_add_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_add.text().replace(' ','_').upper()
-        stock_val = int(self.stock_count_add.text())
-        mp.update_quantity(item_name, stock_val, stock_call_add_date_time)
+    
 
-    def call_red(self):
-        now = datetime.datetime.now()
-        stock_red_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_red.text().replace(' ','_').lower()
-        try:
-            stock_val = -(int(self.stock_count_red.text()))
-            print(stock_val)
-            print(type(stock_val))
-            mp.update_quantity(item_name, stock_val, stock_red_date_time)
-        except Exception:
-            print('Exception')
+    
 
     def tab4UI(self):
         layout = QVBoxLayout()
@@ -601,8 +626,8 @@ class stackedExample(QWidget):
         layout.addWidget(widget_btm_buttons)
         layout.setAlignment(widget_btm_buttons, Qt.AlignRight)
 
-        self.clear_table_button.clicked.connect(self.clear_upload_table)
-        self.confirm_submit_upload_button.clicked.connect(self.update_DB_upload)
+        # self.clear_table_button.clicked.connect(self.clear_upload_table)
+        # self.confirm_submit_upload_button.clicked.connect(self.update_DB_upload)
         self.tab4.setLayout(layout)
 
     def updateTable(self):
@@ -709,13 +734,26 @@ class stackedExample(QWidget):
         self.conf_text = QLineEdit()
 
         #Add columns here
+        # stack3UI_headers = ['Stock Name', 'Quantity', 'Cost(Per Unit)', 'Header4', 'Header5', 'Header6', 'Header7', 'Header8']
+        # self.View.setColumnCount(8)
+        # self.View.setHorizontalHeaderLabels(stack3UI_headers)
+        # self.View.setColumnWidth(0, 250)
+        # self.View.setColumnWidth(1, 250)
+        # self.View.setColumnWidth(2, 200)
+        # self.View.setColumnWidth(3, 200)
+        # self.View.setColumnWidth(4, 200)
+        # self.View.setColumnWidth(5, 200)
+        # self.View.setColumnWidth(6, 200)
+        # self.View.setColumnWidth(7, 200)
+
+
+
         stack3UI_headers = ['Stock Name', 'Quantity', 'Cost(Per Unit)']
         self.View.setColumnCount(3)
         self.View.setHorizontalHeaderLabels(stack3UI_headers)
         self.View.setColumnWidth(0, 250)
         self.View.setColumnWidth(1, 250)
         self.View.setColumnWidth(2, 200)
-
         
         
         # self.tableWidget.setRowCount(0)
@@ -768,26 +806,54 @@ class stackedExample(QWidget):
             for i in range(1,self.View.rowCount()):
                 self.View.removeRow(1)
 
-
         x_act = mp.show_stock()
         print(x_act, "Result for Stock Count from SQL Lite")
+
+        #the table is already integrated with MySQL using the 'results' variable
         x = []
 
         if self.conf_text.text() != '':
+            print("DEBUG: there is a text")
             for i in range(0,len(results)):
                 a = list(results[i])
                 if self.conf_text.text().lower() in a[0].lower():
                     x.append(a)
         else:
+            print("DEBUG : fetching the data again")
+            print(results, "DEBUG : check if result variable is populated")
             x = results
+
+        # if len(x)!=0:
+        #     print("DENUG: length is more than 1")
+        #     print("Debug: length of data call is ", len(x))
+        #     for i in range(1,len(x)+1):
+        #         self.View.insertRow(i)
+        #         a = list(x[i-1])
+        #         print(a, "Debug: Row data that is obtained from the call")
+        #         print(a[0], "Debug: First item that is called")
+        #         self.View.setItem(i, 0, QTableWidgetItem(str(a[0])))
+        #         self.View.setItem(i, 1, QTableWidgetItem(str(a[1])))
+        #         self.View.setItem(i, 2, QTableWidgetItem(str(a[2])))
+        #         self.View.setItem(i, 3, QTableWidgetItem(str(a[3])))
+        #         self.View.setItem(i, 4, QTableWidgetItem((a[4])))
+        #         self.View.setItem(i, 5, QTableWidgetItem((a[5])))
+        #         self.View.setItem(i, 6, QTableWidgetItem((a[6])))
+        #         self.View.setRowHeight(i, 50)
+        #     self.lbl3.setText('Viewing Stock Database.')
+        # else:
+        #     self.lbl3.setText('No valid information in database.')
+
 
         if len(x)!=0:
             for i in range(1,len(x)+1):
                 self.View.insertRow(i)
                 a = list(x[i-1])
-                self.View.setItem(i, 0, QTableWidgetItem(a[0].replace('_',' ').upper()))
+                self.View.setItem(i, 0, QTableWidgetItem(str(a[0].replace('_',' ').upper())))
                 self.View.setItem(i, 1, QTableWidgetItem(str(a[1])))
                 self.View.setItem(i, 2, QTableWidgetItem(str(a[2])))
+                # self.View.setItem(0, i, QtWidgets.QTableWidgetItem(str(testing)))
+                # self.View.setItem(1, i, QtWidgets.QTableWidgetItem(str(testing)))
+                # self.View.setItem(2, i, QtWidgets.QTableWidgetItem(str(testing)))
                 self.View.setRowHeight(i, 50)
             self.lbl3.setText('Viewing Stock Database.')
         else:
