@@ -7,11 +7,12 @@ use dr_db;
 create table trn_hist (
 	trn_id int primary key,
 	user_id varchar(64) not null,
-	item_name varchar(512) not null,
+	stock_name varchar(512) not null,
 	item_sn int,
 	qty int,
 	trns_mode varchar(8),
-	date datetime
+	date datetime,
+	trns_details varchar(128)
 );
 
 create table user (
@@ -24,15 +25,22 @@ create table user (
 
 create table stock_list (
 	supplier_name_inp varchar(128), 
-	item_name_inp varchar(128), 
+	item_name_inp varchar(256), 
 	item_no_inp varchar(32) primary key, 
-	description_inp varchar(512), 
-	unit_inp int, 
+	description_inp varchar(64), 
+	unit_inp varchar(8), 
 	reorder_lvl_inp int, 
 	reorder_days_inp int, 
 	reorder_qty_inp int, 
-	stock_add_date_time datetime
+	stock_add_date_time datetime,
+	serial_no varchar(128),
+	item_location varchar(128),
+	cost_per_item double,
+	stock_qty int,
+	inventory_value double,
 );
+
+
 
 insert into user (user_id,password,staff_id, access_rights) 
 	values  ('admin','dradmin',111,A),
