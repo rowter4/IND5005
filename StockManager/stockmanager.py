@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import QDateEdit
 from PyQt5.QtWidgets import QCalendarWidget
 from PyQt5.QtWidgets import QStackedWidget
 from PyQt5.QtWidgets import (QWidget, QPushButton, QMainWindow,
-                             QHBoxLayout, QAction, QApplication, QLabel, QLineEdit,QMessageBox)
+                             QHBoxLayout, QAction, QApplication, QLabel, QLineEdit,QMessageBox, QDialog, QApplication)
 
 # import sqlite3
 import re
@@ -33,6 +33,10 @@ mydb = mc.connect(host='localhost', password='2023nusproject%', user='root', dat
 if mydb.is_connected():
     print("Connection established....")
     mycursor = mydb.cursor()
+
+
+ # mycursor.close() #might need to close the connection to the database 
+
 
 # try:
 #     conn = sqlite3.connect('stock.db')
@@ -199,8 +203,8 @@ class stackedExample(QWidget):
         self.reorder_qty = QLineEdit()
         layout.addRow("Reorder Quantity", self.reorder_qty)
 
-        self.stock_serialNo = QLineEdit()
-        layout.addRow("Serial Number (Numbers)", self.stock_serialNo)
+        # self.stock_serialNo = QLineEdit()
+        # layout.addRow("Serial Number (Numbers)", self.stock_serialNo)
 
 
         layout.addWidget(self.ok)
@@ -256,6 +260,7 @@ class stackedExample(QWidget):
         reorder_days_inp = self.reorder_days.text()
         reorder_qty_inp = self.reorder_qty.text()
         stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
+        serial_no_inp = self.serial_no.text()
 
 
         confirmation_box = QMessageBox.question(self, 'Confirmation',
@@ -263,6 +268,7 @@ class stackedExample(QWidget):
                                             f"Supplier Name: {supplier_name_inp}\n"
                                             f"Item Name: {item_name_inp}\n"
                                             f"Item No.: {item_no_inp}\n"
+                                            f"Serial No.: {serial_no_inp}\n"
                                             f"Description: {description_inp}\n"
                                             f"UOM: {unit_inp}\n"
                                             f"Reorder Level: {reorder_lvl_inp}\n"
@@ -276,8 +282,8 @@ class stackedExample(QWidget):
             # print(d)
 
             mycursor = mydb.cursor()
-            query = "INSERT INTO STOCK_LIST (supplier_name_inp,item_name_inp,item_no_inp,description_inp,unit_inp,reorder_lvl_inp,reorder_days_inp,reorder_qty_inp,stock_add_date_time) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-            value = (supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp, reorder_days_inp, reorder_qty_inp, stock_add_date_time)
+            query = "INSERT INTO STOCK_LIST (supplier_name_inp,item_name_inp,item_no_inp,description_inp,unit_inp,reorder_lvl_inp,reorder_days_inp,reorder_qty_inp,stock_add_date_time, serial_no) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            value = (supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp, reorder_days_inp, reorder_qty_inp, stock_add_date_time, serial_no_inp)
             mycursor.execute(query,value)
             mydb.commit()
 
@@ -717,8 +723,6 @@ class stackedExample(QWidget):
         print('extract pdf')
 
 
-
-
     def stack3UI(self):
 
         # table = mp.show_stock()
@@ -733,58 +737,30 @@ class stackedExample(QWidget):
         self.lbl_conf_text.setText("Enter the search keyword:")
         self.conf_text = QLineEdit()
 
-        #Add columns here
-        # stack3UI_headers = ['Stock Name', 'Quantity', 'Cost(Per Unit)', 'Header4', 'Header5', 'Header6', 'Header7', 'Header8']
-        # self.View.setColumnCount(8)
-        # self.View.setHorizontalHeaderLabels(stack3UI_headers)
-        # self.View.setColumnWidth(0, 250)
-        # self.View.setColumnWidth(1, 250)
-        # self.View.setColumnWidth(2, 200)
-        # self.View.setColumnWidth(3, 200)
-        # self.View.setColumnWidth(4, 200)
-        # self.View.setColumnWidth(5, 200)
-        # self.View.setColumnWidth(6, 200)
-        # self.View.setColumnWidth(7, 200)
-
-
-
-        stack3UI_headers = ['Stock Name', 'Quantity', 'Cost(Per Unit)']
-        self.View.setColumnCount(3)
+     
+        self.View.setColumnCount(14)
+        self.View.setRowCount(0)
+        stack3UI_headers = ['Company Name', 'Item Name', 'Item No.', 'Description', 'Unit of Measurement', 'Reorder Level', 'Days Per Reorder', ' Reorder Quantity',
+                            'Date Added', 'Serial No', 'Location', 'Quantity', 'Cost Per Item', 'Inventory Value']
         self.View.setHorizontalHeaderLabels(stack3UI_headers)
         self.View.setColumnWidth(0, 250)
         self.View.setColumnWidth(1, 250)
         self.View.setColumnWidth(2, 200)
-        
-        
-        # self.tableWidget.setRowCount(0)
-        # for row_number, row_data in enumerate(results):
-        #     self.tableWidget.insertRow(row_number)
-
-        #     for column_number, data in enumerate(row_data):
-        #         self.tableWidget.setItem(row_number, column_number, QTableWidgetItem(str(data)) )
-
-
-       
-        
-        # print(results, "Results that are called from the stock")
-
-       
+        self.View.setColumnWidth(3, 200)
+        self.View.setColumnWidth(4, 200)
+        self.View.setColumnWidth(5, 200)
+        self.View.setColumnWidth(6, 200)
+        self.View.setColumnWidth(7, 200)
+        self.View.setColumnWidth(8, 250)
+        self.View.setColumnWidth(9, 200)
+        self.View.setColumnWidth(10, 200)
+        self.View.setColumnWidth(11, 200)
+        self.View.setColumnWidth(12, 200)
+        self.View.setColumnWidth(13, 200)
 
         # cur = self.SQLiteDB.cursor()
         # cur.execute("SELECT * FROM SQLTable")admi
         # allSQLRows= cursor.fetchall()
-
-        # self.myTableWidget.setRowCount(len(stockResults)) ##set number of rows
-        # self.myTableWidget.setColumnCount(8) ##this is fixed for myTableWidget, ensure that both of your tables, sql and qtablewidged have the same number of columns
-
-        # row = 0
-        # while True:
-        #     sqlRow = mycursor.fetchone()
-        #     if sqlRow == None:
-        #         break ##stops while loop if there is no more lines in sql table
-        #     for col in range(0, 8): ##otherwise add row into tableWidget
-                # self.myTableWidget.setItem(row, col, QtGui.QTableWidgetItem(sqlRow[col]))
-            # row += 1
 
 
         layout.addWidget(self.View)
@@ -792,12 +768,25 @@ class stackedExample(QWidget):
         layout.addWidget(self.conf_text)
         layout.addWidget(self.srb)
         layout.addWidget(self.lbl3)
-        self.srb.clicked.connect(self.show_search)
         self.stack3.setLayout(layout)
+        self.srb.clicked.connect(self.upload_data)
+    
+    def upload_data(self):
+        sql_query1 = "SELECT * FROM stock_list" 
+        mycursor.execute(sql_query1)
+        results = mycursor.fetchall()
+        print(results, "Results that are called from the stock")
 
-    def show_search(self):
+        for row_number, row_data in enumerate(results):
+            self.View.insertRow(row_number)
+            for column_number,data in enumerate(row_data):
+                self.View.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
 
-        sql_query1 = "SELECT * FROM stock_1" 
+
+
+    def show_search(self): #this code is for filtering the data that we would like to show. However, this is not being used for now
+
+        sql_query1 = "SELECT * FROM stock_list" 
         mycursor.execute(sql_query1)
         results = mycursor.fetchall()
         print(results, "Results that are called from the stock")
@@ -806,8 +795,8 @@ class stackedExample(QWidget):
             for i in range(1,self.View.rowCount()):
                 self.View.removeRow(1)
 
-        x_act = mp.show_stock()
-        print(x_act, "Result for Stock Count from SQL Lite")
+        # x_act = mp.show_stock()
+        # print(x_act, "Result for Stock Count from SQL Lite")
 
         #the table is already integrated with MySQL using the 'results' variable
         x = []
@@ -823,37 +812,15 @@ class stackedExample(QWidget):
             print(results, "DEBUG : check if result variable is populated")
             x = results
 
-        # if len(x)!=0:
-        #     print("DENUG: length is more than 1")
-        #     print("Debug: length of data call is ", len(x))
-        #     for i in range(1,len(x)+1):
-        #         self.View.insertRow(i)
-        #         a = list(x[i-1])
-        #         print(a, "Debug: Row data that is obtained from the call")
-        #         print(a[0], "Debug: First item that is called")
-        #         self.View.setItem(i, 0, QTableWidgetItem(str(a[0])))
-        #         self.View.setItem(i, 1, QTableWidgetItem(str(a[1])))
-        #         self.View.setItem(i, 2, QTableWidgetItem(str(a[2])))
-        #         self.View.setItem(i, 3, QTableWidgetItem(str(a[3])))
-        #         self.View.setItem(i, 4, QTableWidgetItem((a[4])))
-        #         self.View.setItem(i, 5, QTableWidgetItem((a[5])))
-        #         self.View.setItem(i, 6, QTableWidgetItem((a[6])))
-        #         self.View.setRowHeight(i, 50)
-        #     self.lbl3.setText('Viewing Stock Database.')
-        # else:
-        #     self.lbl3.setText('No valid information in database.')
-
 
         if len(x)!=0:
             for i in range(1,len(x)+1):
                 self.View.insertRow(i)
                 a = list(x[i-1])
+                print(str(a[0]), "DEBUG : get value for a[0]")
                 self.View.setItem(i, 0, QTableWidgetItem(str(a[0].replace('_',' ').upper())))
                 self.View.setItem(i, 1, QTableWidgetItem(str(a[1])))
                 self.View.setItem(i, 2, QTableWidgetItem(str(a[2])))
-                # self.View.setItem(0, i, QtWidgets.QTableWidgetItem(str(testing)))
-                # self.View.setItem(1, i, QtWidgets.QTableWidgetItem(str(testing)))
-                # self.View.setItem(2, i, QtWidgets.QTableWidgetItem(str(testing)))
                 self.View.setRowHeight(i, 50)
             self.lbl3.setText('Viewing Stock Database.')
         else:

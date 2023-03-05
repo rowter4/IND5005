@@ -25,19 +25,19 @@ create table user (
 
 create table stock_list (
 	supplier_name_inp varchar(128), 
-	item_name_inp varchar(256), 
-	item_no_inp varchar(32) primary key, 
+	item_name_inp varchar(128), 
+	item_no_inp varchar(64) primary key, 
 	description_inp varchar(64), 
 	unit_inp varchar(8), 
 	reorder_lvl_inp int, 
 	reorder_days_inp int, 
 	reorder_qty_inp int, 
 	stock_add_date_time datetime,
-	serial_no varchar(128),
+	serial_no varchar(64),
 	item_location varchar(128),
 	cost_per_item double,
 	stock_qty int,
-	inventory_value double,
+	inventory_value double
 );
 
 
