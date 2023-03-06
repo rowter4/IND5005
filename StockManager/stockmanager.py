@@ -71,7 +71,7 @@ class Login(QtWidgets.QDialog):
         uname = self.textName.text()
         passw = self.textPass.text()
         # connection = sqlite3.connect("user.db")
-        self.accept()
+        # self.accept()
         sql_query = "SELECT * FROM user where user_id = '%s' AND password = '%s'" % (uname,passw) 
         # result = mycursor.execute( )
         # result = connection.execute("SELECT * FROM user WHERE USERNAME = ? AND PASSWORD = ?", (uname, passw))
@@ -319,7 +319,7 @@ class stackedExample(QWidget):
         self.expiry_add = QDateEdit(self)
         self.expiry_add.setDisplayFormat('dd-MM-yyyy')
         self.expiry_add.setCalendarPopup(True)
-        self.expiry_add.setDate(QDate(7999,12,31))
+        self.expiry_add.setDate(QDate(2099,12,31))
 
         # Add item button
         self.ok_add = QPushButton('Add Item', self)
@@ -404,15 +404,26 @@ class stackedExample(QWidget):
     #     print(date)
 
     def call_add(self):
+        print("Tried to add the stock into the database")
         now = datetime.datetime.now()
         stock_call_add_date_time = now.strftime("%Y-%m-%d %H:%M")
         # item_name = self.item_name_add.text().replace(' ','_').upper()
-        stock_val = (self.stock_count_add.text())
+        item_no = self.item_no_add.text()
+        item_cost = self.cost_per_item_add.text()
+        location = self.location_add.text()
+        # expy_date = self.expiry_add.text()
 
-        print("updated stock Value is : ", stock_val)
+        qty_val = (int(self.stock_count_add.text()))
+        query = "SELECT stock_qty FROM stock_list WHERE item_no_inp = '"+item_no+"'"
+        mycursor.execute(query)
+        result_1 = mycursor.fetchall()
+        for x in result_1:
+            initial_stock = x[0]
 
-        query = "UPDATE stock_list SET unit_inp = '"+stock_val+"' WHERE item_no_inp = '1'"
-        #need to update query to reflect the item no.
+        final_stock_cal = initial_stock + qty_val
+        final_stock = str(final_stock_cal)
+
+        query = "UPDATE stock_list SET stock_qty = '"+final_stock+"', cost_per_item = '"+item_cost+"', item_location = '"+location+"'  WHERE item_no_inp = '"+item_no+"'"
         mycursor.execute(query)
         mydb.commit()
         print(mycursor.rowcount, "record(s) affected")
@@ -489,30 +500,30 @@ class stackedExample(QWidget):
                                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if confirmation_box == QMessageBox.Yes:
-            self.ok_add.clicked.connect(self.call_red)
+            self.ok_red.clicked.connect(self.call_red)
 
     def call_red(self):
         now = datetime.datetime.now()
         stock_red_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_red.text().replace(' ','_').lower()
-        try:
-            stock_val = -(int(self.stock_count_red.text()))
-            print(stock_val)
-            print(type(stock_val))
+        item_no = self.item_no_red.text()
+        qty_val = -(int(self.stock_count_red.text()))
 
-            item_no = self.item_no_red.text()
+        query = "SELECT stock_qty FROM stock_list WHERE item_no_inp = '"+item_no+"'"
+        mycursor.execute(query)
+        result_2 = mycursor.fetchall()
+        for x in result_2:
+            initial_stock = x[0]
+        final_stock_cal = initial_stock + qty_val
+        final_stock = str(final_stock_cal)
 
+        query = "UPDATE stock_list SET stock_qty = '"+final_stock+"' WHERE item_no_inp = '"+item_no+"'"
+        mycursor.execute(query)
+        mydb.commit()
+        print(mycursor.rowcount, "record(s) affected")
 
-            print("updated stock Value is : ", stock_val)
-
-            query = "UPDATE stock_list SET unit_inp = '"+stock_val+"' WHERE item_no_inp = '"+item_no+"'"
-            mycursor.execute(query)
-            mydb.commit()
-            print(mycursor.rowcount, "record(s) affected")
-
-            # mp.update_quantity(item_name, stock_val, stock_red_date_time)
-        except Exception:
-            print('Exception')
+        # mp.update_quantity(item_name, stock_val, stock_red_date_time)
+        # except Exception:
+        #     print('Exception')
 
     def tab3UI(self):
 
@@ -741,7 +752,7 @@ class stackedExample(QWidget):
         self.View.setColumnCount(14)
         self.View.setRowCount(0)
         stack3UI_headers = ['Company Name', 'Item Name', 'Item No.', 'Description', 'Unit of Measurement', 'Reorder Level', 'Days Per Reorder', ' Reorder Quantity',
-                            'Date Added', 'Serial No', 'Location', 'Quantity', 'Cost Per Item', 'Inventory Value']
+                            'Date Added', 'Serial No', 'Location', 'Cost Per Item', 'Quantity', 'Inventory Value']
         self.View.setHorizontalHeaderLabels(stack3UI_headers)
         self.View.setColumnWidth(0, 250)
         self.View.setColumnWidth(1, 250)
