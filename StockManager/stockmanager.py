@@ -71,7 +71,7 @@ class Login(QtWidgets.QDialog):
         uname = self.textName.text()
         passw = self.textPass.text()
         # connection = sqlite3.connect("user.db")
-        self.accept()
+        # self.accept()
         sql_query = "SELECT * FROM user where user_id = '%s' AND password = '%s'" % (uname, passw)
         # result = mycursor.execute( )
         # result = connection.execute("SELECT * FROM user WHERE USERNAME = ? AND PASSWORD = ?", (uname, passw))
@@ -282,6 +282,7 @@ class stackedExample(QWidget):
             mydb.commit()
 
             self.upload_data()
+            self.show_trans_history()
             self.add_trans_history("INSERT", item_name_inp, item_no_inp, 0)
 
     def stack2UI(self):
@@ -395,6 +396,8 @@ class stackedExample(QWidget):
 
         if confirmation_box == QMessageBox.Yes:
             self.ok_add.clicked.connect(self.call_add)
+            self.upload_data()
+            self.show_trans_history()
             self.add_trans_history("UPDATE", "", item_no_add, stock_count_add)
 
     # def on_select_date(self, date):
@@ -854,6 +857,7 @@ class stackedExample(QWidget):
         self.srt.clicked.connect(self.show_trans_history)
         self.stack4.setLayout(layout)
 
+
     def add_trans_history(self, transaction_type, stock_name, item_no, qty):
         print('this is employee number ' + str(employee_id))
         sql_tid = "SELECT max(trn_id) FROM trn_hist"
@@ -879,17 +883,21 @@ class stackedExample(QWidget):
         mycursor.execute(query_trns_hist, value_trns_hist)
         mydb.commit()
 
-    def show_trans_history(self):
 
-        if self.Trans.rowCount() > 0:
-            for i in range(1, self.Trans.rowCount()):
-                self.Trans.removeRow(0)
+    def clear_trans_table(self):
+
+        # self.upload_table.clearContents()
+        while self.Trans.rowCount() > 0:
+            self.Trans.removeRow(0)
+
+
+    def show_trans_history(self):
 
         sql_query_trans_hist = "SELECT * FROM trn_hist"
         mycursor.execute(sql_query_trans_hist)
         results_trans_hist = mycursor.fetchall()
         print(results_trans_hist)
-
+        self.clear_trans_table()
         for row_number, row_data in enumerate(results_trans_hist):
             self.Trans.insertRow(row_number)
             for column_number, data in enumerate(row_data):
