@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import QDateEdit
 from PyQt5.QtWidgets import QCalendarWidget
 from PyQt5.QtWidgets import QStackedWidget
 from PyQt5.QtWidgets import (QWidget, QPushButton, QMainWindow,
-                             QHBoxLayout, QAction, QApplication, QLabel, QLineEdit,QMessageBox, QDialog, QApplication)
+                             QHBoxLayout, QAction, QApplication, QLabel, QLineEdit, QMessageBox)
 
 # import sqlite3
 import re
@@ -33,9 +33,6 @@ mydb = mc.connect(host='localhost', password='2023nusproject%', user='root', dat
 if mydb.is_connected():
     print("Connection established....")
     mycursor = mydb.cursor()
-
-
- # mycursor.close() #might need to close the connection to the database 
 
 
 # try:
@@ -72,7 +69,7 @@ class Login(QtWidgets.QDialog):
         passw = self.textPass.text()
         # connection = sqlite3.connect("user.db")
         self.accept()
-        sql_query = "SELECT * FROM user where user_id = '%s' AND password = '%s'" % (uname,passw) 
+        sql_query = "SELECT * FROM user where user_id = '%s' AND password = '%s'" % (uname, passw)
         # result = mycursor.execute( )
         # result = connection.execute("SELECT * FROM user WHERE USERNAME = ? AND PASSWORD = ?", (uname, passw))
         mycursor.execute(sql_query)
@@ -91,8 +88,6 @@ class Login(QtWidgets.QDialog):
             QtWidgets.QMessageBox.warning(self, 'Error', 'Bad user or password')
             # login = Login()
             # Login.__init__(self)
-           
-           
 
     # def handleLogin(self):
     #     if (self.textName.text() == 'Admin' and
@@ -102,8 +97,8 @@ class Login(QtWidgets.QDialog):
     #         QtWidgets.QMessageBox.warning(
     #             self, 'Error', 'Bad user or password')
 
-class Example(QMainWindow):
 
+class Example(QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -164,10 +159,9 @@ class stackedExample(QWidget):
 
         self.setLayout(hbox)
         self.leftlist.currentRowChanged.connect(self.display)
-        self.setGeometry(500,350, 200, 200)
+        self.setGeometry(500, 350, 200, 200)
         self.setWindowTitle('Stock Management')
         self.show()
-
 
     def stack1UI(self):
         layout = QFormLayout()
@@ -202,10 +196,6 @@ class stackedExample(QWidget):
 
         self.reorder_qty = QLineEdit()
         layout.addRow("Reorder Quantity", self.reorder_qty)
-
-        # self.stock_serialNo = QLineEdit()
-        # layout.addRow("Serial Number (Numbers)", self.stock_serialNo)
-
 
         layout.addWidget(self.ok)
         layout.addWidget(cancel)
@@ -245,9 +235,9 @@ class stackedExample(QWidget):
             empty_fields_message = "\n".join(empty_fields_array)
             error_message_box = QtWidgets.QMessageBox()
             error_message_box.warning(
-                self, 'Error', f'Unable to add item to inventory. \nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
+                self, 'Error',
+                f'Unable to add item to inventory. \nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
             return 'Error'
-
 
         # Follow this variable names (inp: input)
         now = datetime.datetime.now()
@@ -260,21 +250,18 @@ class stackedExample(QWidget):
         reorder_days_inp = self.reorder_days.text()
         reorder_qty_inp = self.reorder_qty.text()
         stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
-        serial_no_inp = self.serial_no.text()
-
 
         confirmation_box = QMessageBox.question(self, 'Confirmation',
-                                            f"Please Confirm the Following Details:\n"
-                                            f"Supplier Name: {supplier_name_inp}\n"
-                                            f"Item Name: {item_name_inp}\n"
-                                            f"Item No.: {item_no_inp}\n"
-                                            f"Serial No.: {serial_no_inp}\n"
-                                            f"Description: {description_inp}\n"
-                                            f"UOM: {unit_inp}\n"
-                                            f"Reorder Level: {reorder_lvl_inp}\n"
-                                            f"Reorder Days: {reorder_days_inp}\n"
-                                            f"Reorder Qty: {reorder_qty_inp}\n",
-                                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                                f"Please Confirm the Following Details:\n"
+                                                f"Supplier Name: {supplier_name_inp}\n"
+                                                f"Item Name: {item_name_inp}\n"
+                                                f"Item No.: {item_no_inp}\n"
+                                                f"Description: {description_inp}\n"
+                                                f"UOM: {unit_inp}\n"
+                                                f"Reorder Level: {reorder_lvl_inp}\n"
+                                                f"Reorder Days: {reorder_days_inp}\n"
+                                                f"Reorder Qty: {reorder_qty_inp}\n",
+                                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if confirmation_box == QMessageBox.Yes:
             # d = mp.insert_prod(supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp,
@@ -282,16 +269,19 @@ class stackedExample(QWidget):
             # print(d)
 
             mycursor = mydb.cursor()
-            query = "INSERT INTO STOCK_LIST (supplier_name_inp,item_name_inp,item_no_inp,description_inp,unit_inp,reorder_lvl_inp,reorder_days_inp,reorder_qty_inp,stock_add_date_time, serial_no) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-            value = (supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp, reorder_days_inp, reorder_qty_inp, stock_add_date_time, serial_no_inp)
-            mycursor.execute(query,value)
+            query = "INSERT INTO STOCK_LIST (supplier_name_inp,item_name_inp,item_no_inp,description_inp,unit_inp,reorder_lvl_inp,reorder_days_inp,reorder_qty_inp,stock_add_date_time) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            value = (
+            supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp, reorder_days_inp,
+            reorder_qty_inp, stock_add_date_time)
+            mycursor.execute(query, value)
             mydb.commit()
 
+            self.upload_data()
 
     def stack2UI(self):
 
         layout = QHBoxLayout()
-        layout.setGeometry(QRect(0,300,1150,500))
+        layout.setGeometry(QRect(0, 300, 1150, 500))
         tabs = QTabWidget()
         self.tab1 = QWidget()
         self.tab2 = QWidget()
@@ -319,7 +309,7 @@ class stackedExample(QWidget):
         self.expiry_add = QDateEdit(self)
         self.expiry_add.setDisplayFormat('dd-MM-yyyy')
         self.expiry_add.setCalendarPopup(True)
-        self.expiry_add.setDate(QDate(7999,12,31))
+        self.expiry_add.setDate(QDate(7999, 12, 31))
 
         # Add item button
         self.ok_add = QPushButton('Add Item', self)
@@ -373,7 +363,8 @@ class stackedExample(QWidget):
             empty_fields_message = "\n".join(empty_fields_array)
             error_message_box = QtWidgets.QMessageBox()
             error_message_box.warning(
-                self, 'Error', f'Unable to add quantity.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
+                self, 'Error',
+                f'Unable to add quantity.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
             return 'Error'
 
         # print(field_array_tab1UI)
@@ -388,13 +379,13 @@ class stackedExample(QWidget):
         stock_add_date_time = now.strftime("%Y-%m-%d %H:%M")
 
         confirmation_box = QMessageBox.question(self, 'Confirmation',
-                                        f"Please confirm if you wish to add the following details:\n\n"
-                                        f"Item No.: {item_no_add}\n"
-                                        f"Qty to Add: {stock_count_add}\n"
-                                        f"Cost per Item: {cost_per_item_add}\n"
-                                        f"Location: {location_add}\n"
-                                        f"Expiry Date: {expiry_add}\n",
-                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                                f"Please confirm if you wish to add the following details:\n\n"
+                                                f"Item No.: {item_no_add}\n"
+                                                f"Qty to Add: {stock_count_add}\n"
+                                                f"Cost per Item: {cost_per_item_add}\n"
+                                                f"Location: {location_add}\n"
+                                                f"Expiry Date: {expiry_add}\n",
+                                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if confirmation_box == QMessageBox.Yes:
             self.ok_add.clicked.connect(self.call_add)
@@ -411,8 +402,8 @@ class stackedExample(QWidget):
 
         print("updated stock Value is : ", stock_val)
 
-        query = "UPDATE stock_list SET unit_inp = '"+stock_val+"' WHERE item_no_inp = '1'"
-        #need to update query to reflect the item no.
+        query = "UPDATE stock_list SET unit_inp = '" + stock_val + "' WHERE item_no_inp = '1'"
+        # need to update query to reflect the item no.
         mycursor.execute(query)
         mydb.commit()
         print(mycursor.rowcount, "record(s) affected")
@@ -467,7 +458,8 @@ class stackedExample(QWidget):
             empty_fields_message = "\n".join(empty_fields_array)
             error_message_box = QtWidgets.QMessageBox()
             error_message_box.warning(
-                self, 'Error', f'Unable to reduce quantity.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
+                self, 'Error',
+                f'Unable to reduce quantity.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
             return 'Error'
         # print(field_array_tab1UI)
         # Follow this variable names
@@ -494,7 +486,7 @@ class stackedExample(QWidget):
     def call_red(self):
         now = datetime.datetime.now()
         stock_red_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_red.text().replace(' ','_').lower()
+        item_name = self.item_name_red.text().replace(' ', '_').lower()
         try:
             stock_val = -(int(self.stock_count_red.text()))
             print(stock_val)
@@ -502,10 +494,9 @@ class stackedExample(QWidget):
 
             item_no = self.item_no_red.text()
 
-
             print("updated stock Value is : ", stock_val)
 
-            query = "UPDATE stock_list SET unit_inp = '"+stock_val+"' WHERE item_no_inp = '"+item_no+"'"
+            query = "UPDATE stock_list SET unit_inp = '" + stock_val + "' WHERE item_no_inp = '" + item_no + "'"
             mycursor.execute(query)
             mydb.commit()
             print(mycursor.rowcount, "record(s) affected")
@@ -550,7 +541,8 @@ class stackedExample(QWidget):
             empty_fields_message = "\n".join(empty_fields_array)
             error_message_box = QtWidgets.QMessageBox()
             error_message_box.warning(
-                self, 'Error', f'Unable to delete item.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
+                self, 'Error',
+                f'Unable to delete item.\nPlease ensure that the following fields have been filled.\n\n{empty_fields_message}')
             return 'Error'
         # print(field_array_tab1UI)
         # Follow this variable names
@@ -569,19 +561,14 @@ class stackedExample(QWidget):
     def call_del(self):
         now = datetime.datetime.now()
         stock_del_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_del.text().replace(' ','_').upper()
-        
-        
-        query = "DELETE FROM stock_list WHERE item_name='"+item_name+"' " 
+        item_name = self.item_name_del.text().replace(' ', '_').upper()
+
+        query = "DELETE FROM stock_list WHERE item_name='" + item_name + "' "
         mycursor.execute(query)
         mydb.commit()
         print(mycursor.rowcount, "record(s) affected")
-        
+
         # mp.remove_stock(item_name,stock_del_date_time)
-
-    
-
-    
 
     def tab4UI(self):
         layout = QVBoxLayout()
@@ -606,7 +593,6 @@ class stackedExample(QWidget):
         layout_btm_buttons.addWidget(self.confirm_submit_upload_button)
         widget_btm_buttons.setLayout(layout_btm_buttons)
         # self.setCellWidget(2,0,widget_btm_buttons)
-
 
         headers = ['Invoice No.', 'Item No.', 'Location', 'Supplier', 'Item Name', 'Quantity', 'Inventory Value']
 
@@ -655,7 +641,6 @@ class stackedExample(QWidget):
             # "All Files (*);;Python Files (*.py);;Text Files (*.txt)",
             "All Files (*);;Excel Files (*.xlsx);;Text Files (*.csv);;PDF Files (*.pdf)",
         )
-
 
         invalid_files = []
         error_opening_files = []
@@ -711,7 +696,6 @@ class stackedExample(QWidget):
         self.df = self.df.astype(str)
         self.updateTable()
 
-
     def on_item_changed(self, item):
         row = item.row()
         col = item.column()
@@ -721,7 +705,6 @@ class stackedExample(QWidget):
 
     def extract_pdf(self):
         print('extract pdf')
-
 
     def stack3UI(self):
 
@@ -737,10 +720,11 @@ class stackedExample(QWidget):
         self.lbl_conf_text.setText("Enter the search keyword:")
         self.conf_text = QLineEdit()
 
-     
         self.View.setColumnCount(14)
         self.View.setRowCount(0)
-        stack3UI_headers = ['Company Name', 'Item Name', 'Item No.', 'Description', 'Unit of Measurement', 'Reorder Level', 'Days Per Reorder', ' Reorder Quantity',
+
+        stack3UI_headers = ['Supplier Name', 'Item Name', 'Item No.', 'Description', 'Unit of Measurement',
+                            'Reorder Level', 'Days Per Reorder', ' Reorder Quantity',
                             'Date Added', 'Serial No', 'Location', 'Quantity', 'Cost Per Item', 'Inventory Value']
         self.View.setHorizontalHeaderLabels(stack3UI_headers)
         self.View.setColumnWidth(0, 250)
@@ -762,48 +746,54 @@ class stackedExample(QWidget):
         # cur.execute("SELECT * FROM SQLTable")admi
         # allSQLRows= cursor.fetchall()
 
-
         layout.addWidget(self.View)
+
         layout.addWidget(self.lbl_conf_text)
         layout.addWidget(self.conf_text)
         layout.addWidget(self.srb)
         layout.addWidget(self.lbl3)
         self.stack3.setLayout(layout)
         self.srb.clicked.connect(self.upload_data)
-    
+
+    def clear_view_table(self):
+
+        # self.upload_table.clearContents()
+
+        while self.View.rowCount() > 0:
+            self.View.removeRow(0)
+
     def upload_data(self):
-        sql_query1 = "SELECT * FROM stock_list" 
+        sql_query1 = "SELECT * FROM stock_list"
         mycursor.execute(sql_query1)
         results = mycursor.fetchall()
         print(results, "Results that are called from the stock")
-
+        self.clear_view_table()
         for row_number, row_data in enumerate(results):
             self.View.insertRow(row_number)
-            for column_number,data in enumerate(row_data):
+            for column_number, data in enumerate(row_data):
                 self.View.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
 
+    def show_search(
+            self):  # this code is for filtering the data that we would like to show. However, this is not being used for now
 
-
-    def show_search(self): #this code is for filtering the data that we would like to show. However, this is not being used for now
-
-        sql_query1 = "SELECT * FROM stock_list" 
+        sql_query1 = "SELECT * FROM stock_list"
         mycursor.execute(sql_query1)
         results = mycursor.fetchall()
         print(results, "Results that are called from the stock")
 
-        if self.View.rowCount()>1:
-            for i in range(1,self.View.rowCount()):
+        if self.View.rowCount() > 1:
+            for i in range(1, self.View.rowCount()):
                 self.View.removeRow(1)
 
         # x_act = mp.show_stock()
         # print(x_act, "Result for Stock Count from SQL Lite")
 
-        #the table is already integrated with MySQL using the 'results' variable
+        # the table is already integrated with MySQL using the 'results' variable
         x = []
 
         if self.conf_text.text() != '':
             print("DEBUG: there is a text")
-            for i in range(0,len(results)):
+            for i in range(0, len(results)):
                 a = list(results[i])
                 if self.conf_text.text().lower() in a[0].lower():
                     x.append(a)
@@ -812,13 +802,12 @@ class stackedExample(QWidget):
             print(results, "DEBUG : check if result variable is populated")
             x = results
 
-
-        if len(x)!=0:
-            for i in range(1,len(x)+1):
+        if len(x) != 0:
+            for i in range(1, len(x) + 1):
                 self.View.insertRow(i)
-                a = list(x[i-1])
+                a = list(x[i - 1])
                 print(str(a[0]), "DEBUG : get value for a[0]")
-                self.View.setItem(i, 0, QTableWidgetItem(str(a[0].replace('_',' ').upper())))
+                self.View.setItem(i, 0, QTableWidgetItem(str(a[0].replace('_', ' ').upper())))
                 self.View.setItem(i, 1, QTableWidgetItem(str(a[1])))
                 self.View.setItem(i, 2, QTableWidgetItem(str(a[2])))
                 self.View.setRowHeight(i, 50)
@@ -863,11 +852,11 @@ class stackedExample(QWidget):
         self.stack4.setLayout(layout)
 
     def show_trans_history(self):
-        if self.Trans.rowCount()>1:
-            for i in range(1,self.Trans.rowCount()):
+        if self.Trans.rowCount() > 1:
+            for i in range(1, self.Trans.rowCount()):
                 self.Trans.removeRow(1)
 
-        path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'transaction.txt')
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'transaction.txt')
         if os.path.exists(path):
             tsearch = open(path, 'r')
             x_c = tsearch.readlines()
@@ -875,35 +864,34 @@ class stackedExample(QWidget):
             x = []
             if self.trans_text.text() != '':
                 key = self.trans_text.text()
-                for i in range(0,len(x_c)):
+                for i in range(0, len(x_c)):
                     a = x_c[i].split(" ")
                     name = a[0]
                     action = a[-2]
-                    if (key.lower() in name.lower()) or (key.lower() in action.lower()) :
+                    if (key.lower() in name.lower()) or (key.lower() in action.lower()):
                         x.append(a)
             else:
                 x = x_c.copy()
 
-            for i in range(0,len(x)):
+            for i in range(0, len(x)):
                 x.sort(key=lambda a: a[4])
-            #print(x)
+            # print(x)
             tid = 1900001
-            for i in range(1,len(x)+1):
+            for i in range(1, len(x) + 1):
                 self.Trans.insertRow(i)
 
-                a = x[i-1].split(" ")
+                a = x[i - 1].split(" ")
                 if a[-2] == 'UPDATE':
-                    p = 'Quantity of Stock Changed from '+a[1]+' to '+a[2]
+                    p = 'Quantity of Stock Changed from ' + a[1] + ' to ' + a[2]
                 elif a[-2] == 'INSERT':
-                    p = 'Stock added with Quantity : '+a[1]+' and Cost(Per Unit in Rs.) : '+a[2]
+                    p = 'Stock added with Quantity : ' + a[1] + ' and Cost(Per Unit in Rs.) : ' + a[2]
                 elif a[-2] == 'REMOVE':
                     p = 'Stock information deleted.'
                 else:
                     p = 'None'
 
-
                 self.Trans.setItem(i, 0, QTableWidgetItem(str(tid)))
-                self.Trans.setItem(i, 1, QTableWidgetItem(a[0].replace('_',' ')))
+                self.Trans.setItem(i, 1, QTableWidgetItem(a[0].replace('_', ' ')))
                 self.Trans.setItem(i, 2, QTableWidgetItem(a[-2]))
                 self.Trans.setItem(i, 3, QTableWidgetItem(a[3]))
                 self.Trans.setItem(i, 4, QTableWidgetItem(a[4]))
@@ -915,18 +903,12 @@ class stackedExample(QWidget):
         else:
             self.lbl4.setText('No valid information found.')
 
-
-
     def display(self, i):
         self.Stack.setCurrentIndex(i)
 
 
-
-
 if __name__ == '__main__':
 
-    
- 
     app = QtWidgets.QApplication(sys.argv)
     print("Getting the login first")
     loginFlag = False
@@ -935,11 +917,8 @@ if __name__ == '__main__':
 
     if login.exec_() == QtWidgets.QDialog.Accepted:
         # if loginFlag == True: 
-            window = Example()
-            print("Able to log in")
-        # sys.exit(app.exec_())
+        window = Example()
+        print("Able to log in")
+    # sys.exit(app.exec_())
 
-   
-
-    
     sys.exit(app.exec_())
