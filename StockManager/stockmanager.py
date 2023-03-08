@@ -35,6 +35,8 @@ if mydb.is_connected():
     mycursor = mydb.cursor()
 
 
+employee_id = 000
+
 # try:
 #     conn = sqlite3.connect('stock.db')
 #     c = conn.cursor()
@@ -65,6 +67,7 @@ class Login(QtWidgets.QDialog):
         layout.addWidget(self.buttonLogin)
 
     def login_check(self, parent=None):
+        global employee_id
         uname = self.textName.text()
         passw = self.textPass.text()
         # connection = sqlite3.connect("user.db")
@@ -77,6 +80,8 @@ class Login(QtWidgets.QDialog):
         print(myresults, "Result from Query")
         if myresults:
             self.accept()
+
+            employee_id = myresults[0][2]
             print("Login Credentials is Valid")
             # loginFlag = True
             # if login.exec_() == QtWidgets.QDialog.Accepted:
@@ -277,6 +282,7 @@ class stackedExample(QWidget):
             mydb.commit()
 
             self.upload_data()
+            self.add_trans_history("INSERT", item_name_inp, item_no_inp, 0)
 
     def stack2UI(self):
 
@@ -389,6 +395,7 @@ class stackedExample(QWidget):
 
         if confirmation_box == QMessageBox.Yes:
             self.ok_add.clicked.connect(self.call_add)
+            self.add_trans_history("UPDATE", "", item_no_add, stock_count_add)
 
     # def on_select_date(self, date):
     #     self.expiry_date_add = date.toString(Qt.ISODate)
@@ -482,6 +489,7 @@ class stackedExample(QWidget):
 
         if confirmation_box == QMessageBox.Yes:
             self.ok_add.clicked.connect(self.call_red)
+            self.add_trans_history("UPDATE", "", item_no_red, -stock_count_red)
 
     def call_red(self):
         now = datetime.datetime.now()
@@ -557,6 +565,7 @@ class stackedExample(QWidget):
 
         if confirmation_box == QMessageBox.Yes:
             self.ok_add.clicked.connect(self.call_del)
+            self.add_trans_history("DELETE", "", item_no_del, 0)
 
     def call_del(self):
         now = datetime.datetime.now()
@@ -825,22 +834,16 @@ class stackedExample(QWidget):
         self.lbl_trans_text.setText("Enter the search keyword:")
         self.trans_text = QLineEdit()
 
-        self.Trans.setColumnCount(6)
+        self.Trans.setColumnCount(7)
         self.Trans.setHorizontalHeaderLabels(
-            ['Transaction ID', 'Stock Name', 'Transaction Type', 'Date', 'Time', 'Transaction Specific'])
+            ['Transaction ID', 'Employee ID', 'Item Name', 'Item No.', 'Quantity', 'Transaction Type', 'Date'])
         self.Trans.setColumnWidth(0, 150)
         self.Trans.setColumnWidth(1, 150)
         self.Trans.setColumnWidth(2, 150)
         self.Trans.setColumnWidth(3, 100)
         self.Trans.setColumnWidth(4, 100)
-        self.Trans.setColumnWidth(5, 500)
-        # self.Trans.insertRow(0)
-        # self.Trans.setItem(0, 0, QTableWidgetItem('Transaction ID'))
-        # self.Trans.setItem(0, 1, QTableWidgetItem('Stock Name'))
-        # self.Trans.setItem(0, 2, QTableWidgetItem('Transaction Type'))
-        # self.Trans.setItem(0, 3, QTableWidgetItem('Date'))
-        # self.Trans.setItem(0, 4, QTableWidgetItem('Time'))
-        # self.Trans.setItem(0, 5, QTableWidgetItem('Transaction Specific'))
+        self.Trans.setColumnWidth(5, 150)
+        self.Trans.setColumnWidth(6, 150)
         self.Trans.setRowHeight(0, 20)
 
         layout.addWidget(self.Trans)
@@ -851,57 +854,47 @@ class stackedExample(QWidget):
         self.srt.clicked.connect(self.show_trans_history)
         self.stack4.setLayout(layout)
 
+    def add_trans_history(self, transaction_type, stock_name, item_no, qty):
+        print('this is employee number ' + str(employee_id))
+        sql_tid = "SELECT max(trn_id) FROM trn_hist"
+        mycursor.execute(sql_tid)
+        try:
+            results_tid = mycursor.fetchall()[0][0] + 1
+        except:
+            results_tid = 1900001
+
+        if stock_name == "":
+
+            sql_query_item_name = f"SELECT item_name_inp FROM STOCK_LIST where item_no_inp = '{item_no}'"
+            mycursor.execute(sql_query_item_name)
+            stock_name = mycursor.fetchall()[0][0]
+            print(stock_name)
+
+
+        date_now = datetime.datetime.now()
+        query_trns_hist = "INSERT INTO trn_hist (trn_id,user_id,stock_name,item_no,qty,trns_mode,date) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+        value_trns_hist = (
+            results_tid, employee_id, stock_name, item_no, qty, transaction_type, date_now)
+        print(value_trns_hist)
+        mycursor.execute(query_trns_hist, value_trns_hist)
+        mydb.commit()
+
     def show_trans_history(self):
-        if self.Trans.rowCount() > 1:
+
+        if self.Trans.rowCount() > 0:
             for i in range(1, self.Trans.rowCount()):
-                self.Trans.removeRow(1)
+                self.Trans.removeRow(0)
 
-        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'transaction.txt')
-        if os.path.exists(path):
-            tsearch = open(path, 'r')
-            x_c = tsearch.readlines()
-            tsearch.close()
-            x = []
-            if self.trans_text.text() != '':
-                key = self.trans_text.text()
-                for i in range(0, len(x_c)):
-                    a = x_c[i].split(" ")
-                    name = a[0]
-                    action = a[-2]
-                    if (key.lower() in name.lower()) or (key.lower() in action.lower()):
-                        x.append(a)
-            else:
-                x = x_c.copy()
+        sql_query_trans_hist = "SELECT * FROM trn_hist"
+        mycursor.execute(sql_query_trans_hist)
+        results_trans_hist = mycursor.fetchall()
+        print(results_trans_hist)
 
-            for i in range(0, len(x)):
-                x.sort(key=lambda a: a[4])
-            # print(x)
-            tid = 1900001
-            for i in range(1, len(x) + 1):
-                self.Trans.insertRow(i)
+        for row_number, row_data in enumerate(results_trans_hist):
+            self.Trans.insertRow(row_number)
+            for column_number, data in enumerate(row_data):
+                self.Trans.setItem(row_number, column_number, QtWidgets.QTableWidgetItem(str(data)))
 
-                a = x[i - 1].split(" ")
-                if a[-2] == 'UPDATE':
-                    p = 'Quantity of Stock Changed from ' + a[1] + ' to ' + a[2]
-                elif a[-2] == 'INSERT':
-                    p = 'Stock added with Quantity : ' + a[1] + ' and Cost(Per Unit in Rs.) : ' + a[2]
-                elif a[-2] == 'REMOVE':
-                    p = 'Stock information deleted.'
-                else:
-                    p = 'None'
-
-                self.Trans.setItem(i, 0, QTableWidgetItem(str(tid)))
-                self.Trans.setItem(i, 1, QTableWidgetItem(a[0].replace('_', ' ')))
-                self.Trans.setItem(i, 2, QTableWidgetItem(a[-2]))
-                self.Trans.setItem(i, 3, QTableWidgetItem(a[3]))
-                self.Trans.setItem(i, 4, QTableWidgetItem(a[4]))
-                self.Trans.setItem(i, 5, QTableWidgetItem(p))
-                self.Trans.setRowHeight(i, 50)
-                tid += 1
-
-            self.lbl4.setText('Transaction History.')
-        else:
-            self.lbl4.setText('No valid information found.')
 
     def display(self, i):
         self.Stack.setCurrentIndex(i)
