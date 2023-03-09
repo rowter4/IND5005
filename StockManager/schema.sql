@@ -8,11 +8,10 @@ create table trn_hist (
 	trn_id int primary key,
 	user_id varchar(64) not null,
 	stock_name varchar(512) not null,
-	item_sn int,
+	item_no varchar(64),
 	qty int,
 	trns_mode varchar(8),
-	date datetime,
-	trns_details varchar(128)
+	date datetime
 );
 
 create table user (
