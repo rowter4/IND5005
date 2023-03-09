@@ -438,8 +438,10 @@ class stackedExample(QWidget):
         result_1 = mycursor.fetchall()
         for x in result_1:
             initial_stock = x[0]
+            print(initial_stock, "INTIAL stock FROM TABLE")
 
         final_stock_cal = initial_stock + qty_val
+        print(final_stock_cal, "final stock number")
         final_stock = str(final_stock_cal)
 
 
@@ -522,8 +524,7 @@ class stackedExample(QWidget):
                                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if confirmation_box == QMessageBox.Yes:
-
-            self.ok_add.clicked.connect(self.call_red)
+            self.ok_red.clicked.connect(self.call_red)
             self.add_trans_history("UPDATE", "", item_no_red, -stock_count_red)
 
     def call_red(self):
@@ -531,14 +532,18 @@ class stackedExample(QWidget):
         stock_red_date_time = now.strftime("%Y-%m-%d %H:%M")
 
         item_no = self.item_no_red.text()
+        print(item_no, "DEBUG: item no that was in the form")
         qty_val = -(int(self.stock_count_red.text()))
+        print(qty_val, "DEBUG: QTY VALUE TO REDUCE")
 
         query = "SELECT stock_qty FROM stock_list WHERE item_no_inp = '"+item_no+"'"
         mycursor.execute(query)
         result_2 = mycursor.fetchall()
         for x in result_2:
             initial_stock = x[0]
+            print(initial_stock, "DEBUG: intiial stock from db")
         final_stock_cal = initial_stock + qty_val
+        print(final_stock_cal , "DEBUG: Final quantity ")
         final_stock = str(final_stock_cal)
 
         query = "UPDATE stock_list SET stock_qty = '"+final_stock+"' WHERE item_no_inp = '"+item_no+"'"
