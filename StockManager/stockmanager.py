@@ -164,7 +164,7 @@ class stackedExample(QWidget):
 
         self.setLayout(hbox)
         self.leftlist.currentRowChanged.connect(self.display)
-        self.setGeometry(500, 350, 200, 200)
+        self.setGeometry(200, 150, 1000, 800)
         self.setWindowTitle('Stock Management')
         self.show()
 
@@ -226,6 +226,20 @@ class stackedExample(QWidget):
         self.stack1.setLayout(layout)
 
     def confirmation_add_inv(self):
+        # Check for existing item number
+        sql_query_check_existing = f"SELECT * FROM stock_list where item_no_inp = '{self.item_no.text()}'"
+        mycursor = mydb.cursor()
+        mycursor.execute(sql_query_check_existing)
+        results_check_existing = mycursor.fetchall()
+        print('results_check_existing')
+        print(results_check_existing)
+        if results_check_existing:
+            error_message_box = QtWidgets.QMessageBox()
+            error_message_box.warning(
+                self, 'Error',
+                f'Item No. {self.item_no.text()} already exist in the database.')
+            return 'Error'
+
         # Check for empty fields
         empty_fields_array = []
         incorrect_dtype_array = []
@@ -610,6 +624,11 @@ class stackedExample(QWidget):
 
         self.upload_table = QTableWidget()
 
+        font = QFont()
+        font.setPointSize(10)
+        self.upload_table.setFont(font)
+        self.upload_table.verticalHeader().setDefaultSectionSize(15)
+
         self.upload_table.setColumnCount(7)
         self.upload_table.setHorizontalHeaderLabels(headers)
         self.upload_table.setColumnWidth(0, 100)
@@ -622,16 +641,14 @@ class stackedExample(QWidget):
 
         self.df = pd.DataFrame()
 
-        self.upload_table.setRowHeight(0, 20)
-
         layout.addWidget(self.choose_file)
         layout.addWidget(self.upload_table)
 
         layout.addWidget(widget_btm_buttons)
         layout.setAlignment(widget_btm_buttons, Qt.AlignRight)
 
-        # self.clear_table_button.clicked.connect(self.clear_upload_table)
-        # self.confirm_submit_upload_button.clicked.connect(self.update_DB_upload)
+        self.clear_table_button.clicked.connect(self.clear_upload_table)
+        self.confirm_submit_upload_button.clicked.connect(self.update_DB_upload)
         self.tab4.setLayout(layout)
 
     def updateTable(self):
@@ -653,6 +670,7 @@ class stackedExample(QWidget):
             # "All Files (*);;Python Files (*.py);;Text Files (*.txt)",
             "All Files (*);;Excel Files (*.xlsx);;Text Files (*.csv);;PDF Files (*.pdf)",
         )
+
 
         invalid_files = []
         error_opening_files = []
@@ -695,7 +713,8 @@ class stackedExample(QWidget):
             error_message_box = QtWidgets.QMessageBox()
             error_message_box.setFont(font)
             error_message_box.warning(
-                self, 'Error', f'The following files have invalid file type\n{invalid_files_message}')
+                self, 'Error',
+                f'The following files have invalid file type or invalid format \n {invalid_files_message}')
 
         if error_opening_files_message:
             error_message_box = QtWidgets.QMessageBox()
@@ -708,6 +727,7 @@ class stackedExample(QWidget):
         self.df = self.df.astype(str)
         self.updateTable()
 
+
     def on_item_changed(self, item):
         row = item.row()
         col = item.column()
@@ -718,6 +738,36 @@ class stackedExample(QWidget):
     def extract_pdf(self):
         print('extract pdf')
 
+
+    def clear_upload_table(self):
+        # self.upload_table.clearContents()
+        while self.upload_table.rowCount() > 0 :
+            self.upload_table.removeRow(0)
+        self.df = pd.DataFrame()
+
+    def update_DB_upload(self):
+        # upload to stock DB
+
+        # update transaction history
+        for index, df_row in self.df.iterrows():
+            self.add_trans_history("BULK", df_row['Item Name'], df_row['Item No.'], df_row['Quantity'])
+
+        # clear table widget
+        while self.upload_table.rowCount() > 0:
+            self.upload_table.removeRow(0)
+
+        if self.df.shape[0] > 0:
+            success_message_box = QtWidgets.QMessageBox()
+            success_message_box.warning(self, 'Message', f'Successfully updated database')
+        self.df = pd.DataFrame()
+
+
+    def check_uploadFile_schema(self, df, headers):
+        if list(df.columns) == headers:
+            return 0
+        else:
+            return 1
+
     def stack3UI(self):
 
         # table = mp.show_stock()
@@ -727,6 +777,12 @@ class stackedExample(QWidget):
         self.srb = QPushButton()
         self.srb.setText("Get Search Result.")
         self.View = QTableWidget()
+
+        font = QFont()
+        font.setPointSize(10)
+        self.View.setFont(font)
+        self.View.verticalHeader().setDefaultSectionSize(15)
+
         self.lbl3 = QLabel()
         self.lbl_conf_text = QLabel()
         self.lbl_conf_text.setText("Enter the search keyword:")
@@ -739,20 +795,20 @@ class stackedExample(QWidget):
                             'Reorder Level', 'Days Per Reorder', ' Reorder Quantity',
                             'Date Added', 'Serial No', 'Location', 'Quantity', 'Cost Per Item', 'Inventory Value']
         self.View.setHorizontalHeaderLabels(stack3UI_headers)
-        self.View.setColumnWidth(0, 250)
-        self.View.setColumnWidth(1, 250)
-        self.View.setColumnWidth(2, 200)
-        self.View.setColumnWidth(3, 200)
-        self.View.setColumnWidth(4, 200)
-        self.View.setColumnWidth(5, 200)
-        self.View.setColumnWidth(6, 200)
-        self.View.setColumnWidth(7, 200)
-        self.View.setColumnWidth(8, 250)
-        self.View.setColumnWidth(9, 200)
-        self.View.setColumnWidth(10, 200)
-        self.View.setColumnWidth(11, 200)
-        self.View.setColumnWidth(12, 200)
-        self.View.setColumnWidth(13, 200)
+        self.View.setColumnWidth(0, 150)
+        self.View.setColumnWidth(1, 150)
+        self.View.setColumnWidth(2, 100)
+        self.View.setColumnWidth(3, 150)
+        self.View.setColumnWidth(4, 75)
+        self.View.setColumnWidth(5, 75)
+        self.View.setColumnWidth(6, 75)
+        self.View.setColumnWidth(7, 75)
+        self.View.setColumnWidth(8, 150)
+        self.View.setColumnWidth(9, 100)
+        self.View.setColumnWidth(10, 75)
+        self.View.setColumnWidth(11, 75)
+        self.View.setColumnWidth(12, 75)
+        self.View.setColumnWidth(13, 75)
 
         # cur = self.SQLiteDB.cursor()
         # cur.execute("SELECT * FROM SQLTable")admi
@@ -822,7 +878,7 @@ class stackedExample(QWidget):
                 self.View.setItem(i, 0, QTableWidgetItem(str(a[0].replace('_', ' ').upper())))
                 self.View.setItem(i, 1, QTableWidgetItem(str(a[1])))
                 self.View.setItem(i, 2, QTableWidgetItem(str(a[2])))
-                self.View.setRowHeight(i, 50)
+                # self.View.setRowHeight(i, 10)
             self.lbl3.setText('Viewing Stock Database.')
         else:
             self.lbl3.setText('No valid information in database.')
@@ -832,6 +888,12 @@ class stackedExample(QWidget):
         self.srt = QPushButton()
         self.srt.setText("Get Transaction History.")
         self.Trans = QTableWidget()
+
+        font = QFont()
+        font.setPointSize(10)
+        self.Trans.setFont(font)
+        self.Trans.verticalHeader().setDefaultSectionSize(15)
+
         self.lbl4 = QLabel()
         self.lbl_trans_text = QLabel()
         self.lbl_trans_text.setText("Enter the search keyword:")
@@ -847,7 +909,6 @@ class stackedExample(QWidget):
         self.Trans.setColumnWidth(4, 100)
         self.Trans.setColumnWidth(5, 150)
         self.Trans.setColumnWidth(6, 150)
-        self.Trans.setRowHeight(0, 20)
 
         layout.addWidget(self.Trans)
         layout.addWidget(self.lbl_trans_text)
