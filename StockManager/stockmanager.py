@@ -290,10 +290,9 @@ class stackedExample(QWidget):
             # print(d)
 
             mycursor = mydb.cursor()
-            query = "INSERT INTO STOCK_LIST (supplier_name_inp,item_name_inp,item_no_inp,description_inp,unit_inp,reorder_lvl_inp,reorder_days_inp,reorder_qty_inp,stock_add_date_time) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-            value = (
-            supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp, reorder_days_inp,
-            reorder_qty_inp, stock_add_date_time)
+            query = "INSERT INTO STOCK_LIST (supplier_name_inp,item_name_inp,item_no_inp,description_inp,unit_inp,reorder_lvl_inp,reorder_days_inp,reorder_qty_inp,stock_add_date_time, serial_no, item_location, cost_per_item, stock_qty, inventory_value) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            value = ( supplier_name_inp, item_name_inp, item_no_inp, description_inp, unit_inp, reorder_lvl_inp, reorder_days_inp,
+            reorder_qty_inp, stock_add_date_time,"","",0.0,0,0.0)
             mycursor.execute(query, value)
             mydb.commit()
 
@@ -607,15 +606,15 @@ class stackedExample(QWidget):
                                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if confirmation_box == QMessageBox.Yes:
-            self.ok_add.clicked.connect(self.call_del)
+            self.ok_del.clicked.connect(self.call_del)
             self.add_trans_history("DELETE", "", item_no_del, 0)
 
     def call_del(self):
         now = datetime.datetime.now()
         stock_del_date_time = now.strftime("%Y-%m-%d %H:%M")
-        item_name = self.item_name_del.text().replace(' ', '_').upper()
+        item_no = self.item_no_del.text().replace(' ', '_').upper()
 
-        query = "DELETE FROM stock_list WHERE item_name='" + item_name + "' "
+        query = "DELETE FROM stock_list WHERE item_no_inp = '"+item_no+"' "                                                
         mycursor.execute(query)
         mydb.commit()
         print(mycursor.rowcount, "record(s) affected")
